@@ -1,4 +1,7 @@
 `timescale 1ns / 1ps
+
+`define WAIT_FOR_PLL_LOCKED 1000
+
 module lab2_tb;
 
   wire clk_50M, clk_11M0592;
@@ -24,15 +27,160 @@ module lab2_tb;
     reset_btn = 1;
     #100;
     reset_btn = 0;
+    #`WAIT_FOR_PLL_LOCKED;
     
     for (integer i = 0; i < 20; i = i + 1) begin
       #100;  // 等待 100ns
       push_btn = 1;  // 按下 push_btn 按钮
       #100;  // 等待 100ns
       push_btn = 0;  // 松开 push_btn 按钮
+      #100;  // 等待 100ns
+      push_btn = 1;  // 按下 push_btn 按钮
+      #100;  // 等待 100ns
+      push_btn = 0;  // 松开 push_btn 按钮
+      #100;  // 等待 100ns
+      push_btn = 1;  // 按下 push_btn 按钮
+      #100;  // 等待 100ns
+      push_btn = 0;  // 松开 push_btn 按钮
+      #100;
+
+      reset_btn = 1;
+      #100;
+      reset_btn = 0;
+      #`WAIT_FOR_PLL_LOCKED;
+
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+
+      reset_btn = 1;
+      #100;
+      reset_btn = 0;
+      #`WAIT_FOR_PLL_LOCKED;
+
+      #100;  
+      push_btn = 1;
+      #100;  
+      push_btn = 0;
+
+      #70;
+
     end
 
-    #10000 $finish;
+    // #10000 $finish;
   end
 
   // 待测试用户设计
