@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
-module lab3_tb;
 
+`define WAIT_FOR_PLL_LOCKED 2500
+
+module lab3_tb;
   wire clk_50M, clk_11M0592;
 
   reg push_btn;   // BTN5 按钮开关，带消抖电路，按下时为 1
@@ -13,7 +15,7 @@ module lab3_tb;
   wire [7:0] dpy0;   // 数码管低位信号，包括小数点，输出 1 点亮
   wire [7:0] dpy1;   // 数码管高位信号，包括小数点，输出 1 点亮
 
-  // 实验 3 用到的指令格式
+  // lab3 用到的指令格式
   `define inst_rtype(rd, rs1, rs2, op) \
     {7'b0, rs2, rs1, 3'b0, rd, op, 3'b001}
 
@@ -42,6 +44,63 @@ module lab3_tb;
   logic [4:0] rd, rs1, rs2;
   logic [3:0] opcode;
 
+  // [1, 6]  ops as one group
+  // [7, 10] ops as another group, because they're shifts and operand B can't be too big
+  task test_op_one_round;
+    input [3:0] low;
+    input [3:0] high;
+
+    rd  = $urandom_range(0, 31);
+    rs1 = $urandom_range(0, 31);
+    rs2 = $urandom_range(0, 31);
+
+    dip_sw = `inst_peek(rs1, 16'd0);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    #350;
+    $display("%d: Read operand1: %d", $time, leds);
+
+    if (low >= 4'd7) begin
+      imm = $urandom_range(0, 16);  // shift at most 16 bits
+      dip_sw = `inst_poke(rs2, imm);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+      #200;
+
+      dip_sw = `inst_peek(rs2, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;      
+    end 
+    else begin
+      dip_sw = `inst_peek(rs2, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+    end
+    #350;
+    
+    $display("%d: Read operand2: %d", $time, leds);
+
+    opcode = $urandom_range(low, high);
+
+    dip_sw = `inst_rtype(rd, rs1, rs2, opcode);  // random op type
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    #500;
+
+    // check destination operand
+    dip_sw = `inst_peek(rd, 16'd0);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    #350;
+    $display("%d: Read %d-opcode result: %d", $time, opcode, leds);
+  endtask
+
   initial begin
     // 在这里可以自定义测试输入序列，例如：
     dip_sw = 32'h0;
@@ -53,23 +112,48 @@ module lab3_tb;
     reset_btn = 1;
     #100;
     reset_btn = 0;
-    #1000;  // 等待复位结束
+    #`WAIT_FOR_PLL_LOCKED;
 
     // 样例：使用 POKE 指令为寄存器赋随机初值
-    for (int i = 1; i < 32; i = i + 1) begin
+    for (int i = 0; i < 32; i = i + 1) begin
       #100;
       rd = i;   // only lower 5 bits
-      dip_sw = `inst_poke(rd, $urandom_range(0, 65536));
+      imm = $urandom_range(0, 65535);
+      dip_sw = `inst_poke(rd, imm);
       push_btn = 1;
-
       #100;
       push_btn = 0;
 
-      #1000;
+      $display("%d: Write imm %d to reg #%d", $time, imm, i);
+
+      #800;
     end
+    #1200;
 
-    // TODO: 随机测试各种指令
+    // check all registers
+    for (int i = 0; i < 32; i = i + 1) begin
+      #100;
+      rd = i;
+      dip_sw = `inst_peek(rd, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+      #350;
 
+      $display("%d: Read reg #%d: %d", $time, i, leds);
+
+      #800;
+    end
+    #2000;
+
+    // randomly test the operations
+    for (int i = 0; i < 65; i++) begin
+      test_op_one_round(4'd1, 4'd6);  // test operations other than shifts
+      #350;
+      test_op_one_round(4'd7, 4'd10);  // test shift operations
+      #700;
+    end
+    
     #10000 $finish;
   end
 

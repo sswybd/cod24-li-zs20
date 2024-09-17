@@ -29,7 +29,7 @@ always_ff @(posedge clk) begin
 end
 
 assign rf_rdata_a = (rf_raddr_a > 5'd0) ? regs[rf_raddr_a - 5'd1] : 16'd0;
-assign rf_rdata_b = (rf_raddr_b > 5'd0) ? regs[rf_raddr_a - 5'd1] : 16'd0;
+assign rf_rdata_b = (rf_raddr_b > 5'd0) ? regs[rf_raddr_b - 5'd1] : 16'd0;
 
 endmodule
 

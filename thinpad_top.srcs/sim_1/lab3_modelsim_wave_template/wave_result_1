@@ -1,0 +1,460 @@
+#                 2900: Write imm 41912 to reg #          0
+#                 3900: Write imm  3110 to reg #          1
+#                 4900: Write imm 47462 to reg #          2
+#                 5900: Write imm 58294 to reg #          3
+#                 6900: Write imm  2246 to reg #          4
+#                 7900: Write imm 28230 to reg #          5
+#                 8900: Write imm  3954 to reg #          6
+#                 9900: Write imm 62254 to reg #          7
+#                10900: Write imm 17511 to reg #          8
+#                11900: Write imm 21818 to reg #          9
+#                12900: Write imm  7274 to reg #         10
+#                13900: Write imm 53684 to reg #         11
+#                14900: Write imm 64111 to reg #         12
+#                15900: Write imm  6742 to reg #         13
+#                16900: Write imm 13877 to reg #         14
+#                17900: Write imm 30676 to reg #         15
+#                18900: Write imm 16558 to reg #         16
+#                19900: Write imm 33149 to reg #         17
+#                20900: Write imm 47067 to reg #         18
+#                21900: Write imm  3589 to reg #         19
+#                22900: Write imm 34531 to reg #         20
+#                23900: Write imm 33568 to reg #         21
+#                24900: Write imm 26085 to reg #         22
+#                25900: Write imm 30469 to reg #         23
+#                26900: Write imm 36133 to reg #         24
+#                27900: Write imm  7913 to reg #         25
+#                28900: Write imm  9309 to reg #         26
+#                29900: Write imm 40330 to reg #         27
+#                30900: Write imm  8536 to reg #         28
+#                31900: Write imm 18827 to reg #         29
+#                32900: Write imm 53590 to reg #         30
+#                33900: Write imm 37833 to reg #         31
+#                36450: Read reg #          0:     0
+#                37800: Read reg #          1:  3110
+#                39150: Read reg #          2: 47462
+#                40500: Read reg #          3: 58294
+#                41850: Read reg #          4:  2246
+#                43200: Read reg #          5: 28230
+#                44550: Read reg #          6:  3954
+#                45900: Read reg #          7: 62254
+#                47250: Read reg #          8: 17511
+#                48600: Read reg #          9: 21818
+#                49950: Read reg #         10:  7274
+#                51300: Read reg #         11: 53684
+#                52650: Read reg #         12: 64111
+#                54000: Read reg #         13:  6742
+#                55350: Read reg #         14: 13877
+#                56700: Read reg #         15: 30676
+#                58050: Read reg #         16: 16558
+#                59400: Read reg #         17: 33149
+#                60750: Read reg #         18: 47067
+#                62100: Read reg #         19:  3589
+#                63450: Read reg #         20: 34531
+#                64800: Read reg #         21: 33568
+#                66150: Read reg #         22: 26085
+#                67500: Read reg #         23: 30469
+#                68850: Read reg #         24: 36133
+#                70200: Read reg #         25:  7913
+#                71550: Read reg #         26:  9309
+#                72900: Read reg #         27: 40330
+#                74250: Read reg #         28:  8536
+#                75600: Read reg #         29: 18827
+#                76950: Read reg #         30: 53590
+#                78300: Read reg #         31: 37833
+#                81550: Read operand1:     0
+#                82000: Read operand2:     0
+#                83050: Read  1-opcode result:     0
+#                83850: Read operand1: 13877
+#                84600: Read operand2:     0
+#                85650: Read  8-opcode result: 13877
+#                86800: Read operand1: 36133
+#                87250: Read operand2: 33149
+#                88300: Read  3-opcode result: 33061
+#                89100: Read operand1: 13877
+#                89850: Read operand2:    14
+#                90900: Read  9-opcode result:     0
+#                92050: Read operand1: 28230
+#                92500: Read operand2:  7274
+#                93550: Read  6-opcode result: 37305
+#                94350: Read operand1:  2246
+#                95100: Read operand2:    16
+#                96150: Read 10-opcode result:  2246
+#                97300: Read operand1: 47067
+#                97750: Read operand2:  3110
+#                98800: Read  4-opcode result: 49151
+#                99600: Read operand1: 37305
+#               100350: Read operand2:     3
+#               101400: Read  9-opcode result:  4663
+#               102550: Read operand1:     0
+#               103000: Read operand2: 33568
+#               104050: Read  4-opcode result: 33568
+#               104850: Read operand1:     0
+#               105600: Read operand2:    10
+#               106650: Read  7-opcode result:     0
+#               107800: Read operand1:  9309
+#               108250: Read operand2:  2246
+#               109300: Read  2-opcode result:  7063
+#               110100: Read operand1:  7274
+#               110850: Read operand2:     1
+#               111900: Read  7-opcode result: 14548
+#               113050: Read operand1:     0
+#               113500: Read operand2: 17511
+#               114550: Read  1-opcode result: 17511
+#               115350: Read operand1:     0
+#               116100: Read operand2:    13
+#               117150: Read 10-opcode result:     0
+#               118300: Read operand1:     0
+#               118750: Read operand2: 14548
+#               119800: Read  1-opcode result: 14548
+#               120600: Read operand1:  2246
+#               121350: Read operand2:     0
+#               122400: Read 10-opcode result:  2246
+#               123550: Read operand1:  6742
+#               124000: Read operand2: 64111
+#               125050: Read  3-opcode result:  6726
+#               125850: Read operand1:  8536
+#               126600: Read operand2:     3
+#               127650: Read 10-opcode result:  2753
+#               128800: Read operand1:  2246
+#               129250: Read operand2:     3
+#               130300: Read  1-opcode result:  2249
+#               131100: Read operand1:     1
+#               131850: Read operand2:     0
+#               132900: Read 10-opcode result:     0
+#               134050: Read operand1:  7063
+#               134500: Read operand2: 64111
+#               135550: Read  2-opcode result:  8488
+#               136350: Read operand1:  7274
+#               137100: Read operand2:     3
+#               138150: Read  9-opcode result:   909
+#               139300: Read operand1: 13877
+#               139750: Read operand2:     3
+#               140800: Read  5-opcode result: 13878
+#               141600: Read operand1:     0
+#               142350: Read operand2:     9
+#               143400: Read  7-opcode result:     0
+#               144550: Read operand1:  7274
+#               145000: Read operand2:  8488
+#               146050: Read  4-opcode result: 15722
+#               146850: Read operand1: 64111
+#               147600: Read operand2:     1
+#               148650: Read  7-opcode result: 62686
+#               149800: Read operand1:     1
+#               150250: Read operand2:  2246
+#               151300: Read  4-opcode result:  2247
+#               152100: Read operand1: 37305
+#               152850: Read operand2:     5
+#               153900: Read  8-opcode result:  1165
+#               155050: Read operand1:     0
+#               155500: Read operand2:  1165
+#               156550: Read  2-opcode result: 64371
+#               157350: Read operand1: 33149
+#               158100: Read operand2:     6
+#               159150: Read  7-opcode result: 24384
+#               160300: Read operand1: 37305
+#               160750: Read operand2: 13877
+#               161800: Read  5-opcode result: 42892
+#               162600: Read operand1: 33149
+#               163350: Read operand2:     1
+#               164400: Read  8-opcode result: 16574
+#               165550: Read operand1: 13878
+#               166000: Read operand2:  4663
+#               167050: Read  2-opcode result:  9215
+#               167850: Read operand1:     1
+#               168600: Read operand2:     5
+#               169650: Read  9-opcode result:     0
+#               170800: Read operand1: 64371
+#               171250: Read operand2:     0
+#               172300: Read  6-opcode result:  1164
+#               173100: Read operand1: 14548
+#               173850: Read operand2:    16
+#               174900: Read  9-opcode result:     0
+#               176050: Read operand1: 13877
+#               176500: Read operand2: 64111
+#               177550: Read  2-opcode result: 15302
+#               178350: Read operand1: 33149
+#               179100: Read operand2:     0
+#               180150: Read 10-opcode result: 33149
+#               181300: Read operand1:  2246
+#               181750: Read operand2:     5
+#               182800: Read  1-opcode result:  2251
+#               183600: Read operand1:     0
+#               184350: Read operand2:     6
+#               185400: Read 10-opcode result:     0
+#               186550: Read operand1: 64111
+#               187000: Read operand2:     1
+#               188050: Read  1-opcode result: 64112
+#               188850: Read operand1:     1
+#               189600: Read operand2:     2
+#               190650: Read  7-opcode result:     4
+#               191800: Read operand1:  1165
+#               192250: Read operand2: 15302
+#               193300: Read  2-opcode result: 51399
+#               194100: Read operand1:     0
+#               194850: Read operand2:     0
+#               195900: Read  9-opcode result:     0
+#               197050: Read operand1: 24384
+#               197500: Read operand2: 24384
+#               198550: Read  4-opcode result: 24384
+#               199350: Read operand1:     4
+#               200100: Read operand2:    11
+#               201150: Read  7-opcode result:  8192
+#               202300: Read operand1:  4663
+#               202750: Read operand2:     0
+#               203800: Read  5-opcode result:  4663
+#               204600: Read operand1:     1
+#               205350: Read operand2:     0
+#               206400: Read  7-opcode result:     1
+#               207550: Read operand1:     6
+#               208000: Read operand2: 13877
+#               209050: Read  3-opcode result:     4
+#               209850: Read operand1:  4663
+#               210600: Read operand2:     8
+#               211650: Read  8-opcode result:    18
+#               212800: Read operand1: 47067
+#               213250: Read operand2: 33149
+#               214300: Read  4-opcode result: 47103
+#               215100: Read operand1: 64112
+#               215850: Read operand2:    12
+#               216900: Read 10-opcode result:  4007
+#               218050: Read operand1: 24384
+#               218500: Read operand2:    12
+#               219550: Read  2-opcode result: 24372
+#               220350: Read operand1: 24372
+#               221100: Read operand2:     1
+#               222150: Read  7-opcode result: 48744
+#               223300: Read operand1:     1
+#               223750: Read operand2: 47067
+#               224800: Read  2-opcode result: 18470
+#               225600: Read operand1:     2
+#               226350: Read operand2:     9
+#               227400: Read 10-opcode result:  1024
+#               228550: Read operand1:    11
+#               229000: Read operand2:  8192
+#               230050: Read  4-opcode result:  8203
+#               230850: Read operand1:     2
+#               231600: Read operand2:    14
+#               232650: Read  7-opcode result: 32768
+#               233800: Read operand1:  8192
+#               234250: Read operand2:     2
+#               235300: Read  4-opcode result:  8194
+#               236100: Read operand1:    14
+#               236850: Read operand2:    11
+#               237900: Read  7-opcode result:     0
+#               239050: Read operand1:    18
+#               239500: Read operand2:  8203
+#               240550: Read  2-opcode result: 57351
+#               241350: Read operand1:     8
+#               242100: Read operand2:     4
+#               243150: Read  8-opcode result:     0
+#               244300: Read operand1: 57351
+#               244750: Read operand2: 16574
+#               245800: Read  1-opcode result:  8389
+#               246600: Read operand1:  4663
+#               247350: Read operand2:    15
+#               248400: Read  7-opcode result: 32768
+#               249550: Read operand1: 48744
+#               250000: Read operand2: 24384
+#               251050: Read  4-opcode result: 65384
+#               251850: Read operand1:     8
+#               252600: Read operand2:     9
+#               253650: Read  9-opcode result:     0
+#               254800: Read operand1:  9215
+#               255250: Read operand2:     9
+#               256300: Read  4-opcode result:  9215
+#               257100: Read operand1: 24372
+#               257850: Read operand2:     3
+#               258900: Read  7-opcode result: 63904
+#               260050: Read operand1: 32768
+#               260500: Read operand2:     3
+#               261550: Read  2-opcode result: 32765
+#               262350: Read operand1: 32768
+#               263100: Read operand2:    13
+#               264150: Read  9-opcode result:     4
+#               265300: Read operand1:     0
+#               265750: Read operand2:    14
+#               266800: Read  3-opcode result:     0
+#               267600: Read operand1:  9215
+#               268350: Read operand2:     8
+#               269400: Read  7-opcode result: 65280
+#               270550: Read operand1:  1024
+#               271000: Read operand2: 65384
+#               272050: Read  2-opcode result:  1176
+#               272850: Read operand1: 57351
+#               273600: Read operand2:     7
+#               274650: Read  7-opcode result:   896
+#               275800: Read operand1:     7
+#               276250: Read operand2: 65280
+#               277300: Read  4-opcode result: 65287
+#               278100: Read operand1: 32768
+#               278850: Read operand2:     9
+#               279900: Read 10-opcode result:   256
+#               281050: Read operand1: 32765
+#               281500: Read operand2:   896
+#               282550: Read  3-opcode result:   896
+#               283350: Read operand1: 65384
+#               284100: Read operand2:     0
+#               285150: Read  8-opcode result: 65384
+#               286300: Read operand1:  1176
+#               286750: Read operand2:   896
+#               287800: Read  5-opcode result:  1816
+#               288600: Read operand1:    11
+#               289350: Read operand2:     7
+#               290400: Read  8-opcode result:     0
+#               291550: Read operand1:    11
+#               292000: Read operand2:  9215
+#               293050: Read  2-opcode result: 56332
+#               293850: Read operand1:  1816
+#               294600: Read operand2:     1
+#               295650: Read 10-opcode result:  3632
+#               296800: Read operand1:     3
+#               297250: Read operand2:     0
+#               298300: Read  3-opcode result:     0
+#               299100: Read operand1: 32765
+#               299850: Read operand2:     8
+#               300900: Read 10-opcode result: 64895
+#               302050: Read operand1:  1816
+#               302500: Read operand2: 56332
+#               303550: Read  2-opcode result: 11020
+#               304350: Read operand1:     0
+#               305100: Read operand2:    11
+#               306150: Read  9-opcode result:     0
+#               307300: Read operand1:  1816
+#               307750: Read operand2:     0
+#               308800: Read  1-opcode result:  1816
+#               309600: Read operand1:    14
+#               310350: Read operand2:    15
+#               311400: Read  9-opcode result:     0
+#               312550: Read operand1:     8
+#               313000: Read operand2:     0
+#               314050: Read  3-opcode result:     0
+#               314850: Read operand1:     8
+#               315600: Read operand2:    16
+#               316650: Read  8-opcode result:     0
+#               317800: Read operand1:    16
+#               318250: Read operand2: 13877
+#               319300: Read  2-opcode result: 51675
+#               320100: Read operand1:     4
+#               320850: Read operand2:     7
+#               321900: Read  9-opcode result:     0
+#               323050: Read operand1:     7
+#               323500: Read operand2:     0
+#               324550: Read  4-opcode result:     7
+#               325350: Read operand1: 65384
+#               326100: Read operand2:    10
+#               327150: Read  9-opcode result:    63
+#               328300: Read operand1:     0
+#               328750: Read operand2: 13877
+#               329800: Read  4-opcode result: 13877
+#               330600: Read operand1:  8192
+#               331350: Read operand2:    16
+#               332400: Read  9-opcode result:     0
+#               333550: Read operand1:     0
+#               334000: Read operand2:     0
+#               335050: Read  5-opcode result:     0
+#               335850: Read operand1:   896
+#               336600: Read operand2:     0
+#               337650: Read  9-opcode result:   896
+#               338800: Read operand1: 65384
+#               339250: Read operand2:     7
+#               340300: Read  6-opcode result:   151
+#               341100: Read operand1:     0
+#               341850: Read operand2:     3
+#               342900: Read  9-opcode result:     0
+#               344050: Read operand1:     0
+#               344500: Read operand2:     0
+#               345550: Read  2-opcode result:     0
+#               346350: Read operand1:     0
+#               347100: Read operand2:    12
+#               348150: Read  7-opcode result:     0
+#               349300: Read operand1: 13877
+#               349750: Read operand2: 13877
+#               350800: Read  6-opcode result: 51658
+#               351600: Read operand1:     0
+#               352350: Read operand2:    12
+#               353400: Read  7-opcode result:     0
+#               354550: Read operand1:    12
+#               355000: Read operand2:     8
+#               356050: Read  3-opcode result:     8
+#               356850: Read operand1:     7
+#               357600: Read operand2:     7
+#               358650: Read 10-opcode result:   896
+#               359800: Read operand1:     7
+#               360250: Read operand2:     0
+#               361300: Read  5-opcode result:     7
+#               362100: Read operand1:    14
+#               362850: Read operand2:     4
+#               363900: Read 10-opcode result:   224
+#               365050: Read operand1:  1176
+#               365500: Read operand2:     7
+#               366550: Read  3-opcode result:     0
+#               367350: Read operand1:     0
+#               368100: Read operand2:     7
+#               369150: Read 10-opcode result:     0
+#               370300: Read operand1: 13877
+#               370750: Read operand2:     0
+#               371800: Read  4-opcode result: 13877
+#               372600: Read operand1:    15
+#               373350: Read operand2:    10
+#               374400: Read  7-opcode result: 15360
+#               375550: Read operand1: 65384
+#               376000: Read operand2:     0
+#               377050: Read  5-opcode result: 65384
+#               377850: Read operand1: 65384
+#               378600: Read operand2:    10
+#               379650: Read  7-opcode result: 40960
+#               380800: Read operand1:   224
+#               381250: Read operand2:     0
+#               382300: Read  6-opcode result: 65311
+#               383100: Read operand1:     7
+#               383850: Read operand2:    15
+#               384900: Read  9-opcode result:     0
+#               386050: Read operand1: 65311
+#               386500: Read operand2: 40960
+#               387550: Read  6-opcode result:     0
+#               388350: Read operand1:    11
+#               389100: Read operand2:     8
+#               390150: Read  7-opcode result:  2816
+#               391300: Read operand1: 63904
+#               391750: Read operand2: 15360
+#               392800: Read  1-opcode result: 13728
+#               393600: Read operand1: 13728
+#               394350: Read operand2:     2
+#               395400: Read  7-opcode result: 54912
+#               396550: Read operand1:  1176
+#               397000: Read operand2:     0
+#               398050: Read  3-opcode result:     0
+#               398850: Read operand1:     0
+#               399600: Read operand2:    14
+#               400650: Read  9-opcode result:     0
+#               401800: Read operand1:    14
+#               402250: Read operand2: 13877
+#               403300: Read  5-opcode result: 13883
+#               404100: Read operand1:     7
+#               404850: Read operand2:    13
+#               405900: Read  7-opcode result: 57344
+#               407050: Read operand1:     0
+#               407500: Read operand2:    11
+#               408550: Read  1-opcode result:    11
+#               409350: Read operand1:  9215
+#               410100: Read operand2:     6
+#               411150: Read  7-opcode result: 65472
+#               412300: Read operand1:     0
+#               412750: Read operand2: 13877
+#               413800: Read  6-opcode result: 65535
+#               414600: Read operand1: 65472
+#               415350: Read operand2:    16
+#               416400: Read  7-opcode result:     0
+#               417550: Read operand1: 65535
+#               418000: Read operand2:     0
+#               419050: Read  3-opcode result:     0
+#               419850: Read operand1:     6
+#               420600: Read operand2:     7
+#               421650: Read  9-opcode result:     0
+# ** Note: $finish    : C:/Users/SSWYBD/Desktop/cod24-li-zs20/thinpad_top.srcs/sim_1/new/tb/lab3_tb.sv(157)
+#    Time: 432350 ns  Iteration: 0  Instance: /lab3_tb
+# 1
+# Break in Module lab3_tb at C:/Users/SSWYBD/Desktop/cod24-li-zs20/thinpad_top.srcs/sim_1/new/tb/lab3_tb.sv line 157
+
+

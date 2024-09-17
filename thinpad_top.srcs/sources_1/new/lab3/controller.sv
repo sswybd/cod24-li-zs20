@@ -100,7 +100,7 @@ always_ff @(posedge clk) begin
             WRITE_REG_STATE: begin
                 rf_we <= 1'b1;
                 if (is_rtype) begin
-                    rf_wdata <= alu_y;
+                    rf_wdata <= alu_y;  // `alu_y` has already been calculated, so no rw confict if at the same reg addr
                 end
                 else begin
                     rf_wdata <= imm;
@@ -109,7 +109,7 @@ always_ff @(posedge clk) begin
             end
 
             READ_REG_STATE: begin
-                leds <= rf_rdata_a;
+                leds  <= rf_rdata_a;
                 state <= INIT_STATE;
             end
 

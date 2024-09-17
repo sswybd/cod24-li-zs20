@@ -114,16 +114,16 @@ trigger_mod u_trigger_mod(
     .trigger   (trigger)            // connect to `step`
 );
 
-wire [31:0] inst_reg,
-wire        is_rtype,
-wire        is_itype,
-wire        is_peek,
-wire        is_poke,
-wire [15:0] imm,
-wire [ 4:0] rd,
-wire [ 4:0] rs1,
-wire [ 4:0] rs2,
-wire [ 3:0] opcode
+wire [31:0] inst_reg;
+wire        is_rtype;
+wire        is_itype;
+wire        is_peek;
+wire        is_poke;
+wire [15:0] imm;
+wire [ 4:0] rd;
+wire [ 4:0] rs1;
+wire [ 4:0] rs2;
+wire [ 3:0] opcode;
 
 inst_decoder u_inst_decoder(
     .inst_reg  (inst_reg),
