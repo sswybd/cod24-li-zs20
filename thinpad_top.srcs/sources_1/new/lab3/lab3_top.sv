@@ -80,34 +80,126 @@ module lab3_top (
     output wire       video_de      // 行数据有效信号，用于区分消隐区
 );
 
-  /* =========== Demo code begin =========== */
+/* =========== Demo code begin =========== */
 
-  // PLL 分频示例
-  logic locked, clk_10M, clk_20M;
-  pll_example clock_gen (
-      // Clock in ports
-      .clk_in1(clk_50M),  // 外部时钟输入
-      // Clock out ports
-      .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设置
-      .clk_out2(clk_20M),  // 时钟输出 2，频率在 IP 配置界面中设置
-      // Status and control signals
-      .reset(reset_btn),  // PLL 复位输入
-      .locked(locked)  // PLL 锁定指示输出，"1"表示时钟稳定，
-                       // 后级电路复位信号应当由它生成（见下）
-  );
+// PLL 分频示例
+logic locked, clk_10M, clk_20M;
+pll_example clock_gen (
+    // Clock in ports
+    .clk_in1(clk_50M),  // 外部时钟输入
+    // Clock out ports
+    .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设置
+    .clk_out2(clk_20M),  // 时钟输出 2，频率在 IP 配置界面中设置
+    // Status and control signals
+    .reset(reset_btn),  // PLL 复位输入
+    .locked(locked)  // PLL 锁定指示输出，"1"表示时钟稳定，
+                      // 后级电路复位信号应当由它生成（见下）
+);
 
-  logic reset_of_clk10M;
-  // 异步复位，同步释放，将 locked 信号转为后级电路的复位 reset_of_clk10M
-  always_ff @(posedge clk_10M or negedge locked) begin
+logic reset_of_clk10M;
+// 异步复位，同步释放，将 locked 信号转为后级电路的复位 reset_of_clk10M
+always_ff @(posedge clk_10M or negedge locked) begin
     if (~locked) reset_of_clk10M <= 1'b1;
     else reset_of_clk10M <= 1'b0;
-  end
+end
 
-  /* =========== Demo code end =========== */
+/* =========== Demo code end =========== */
 
-  // TODO: 内部信号声明
+wire trigger;
 
-  // TODO: 实验模块例化
+trigger_mod u_trigger_mod(
+    .clk       (clk_10M)         ,
+    .reset     (reset_of_clk10M) ,
+    .push_btn  (push_btn)        ,
+    .trigger   (trigger)            // connect to `step`
+);
 
+wire [31:0] inst_reg,
+wire        is_rtype,
+wire        is_itype,
+wire        is_peek,
+wire        is_poke,
+wire [15:0] imm,
+wire [ 4:0] rd,
+wire [ 4:0] rs1,
+wire [ 4:0] rs2,
+wire [ 3:0] opcode
+
+inst_decoder u_inst_decoder(
+    .inst_reg  (inst_reg),
+    .is_rtype  (is_rtype),
+    .is_itype  (is_itype),
+    .is_peek   (is_peek),
+    .is_poke   (is_poke),
+    .imm       (imm),
+    .rd        (rd),
+    .rs1       (rs1),
+    .rs2       (rs2),
+    .opcode    (opcode)
+);
+
+wire [ 4:0]  rf_raddr_a;
+wire [15:0]  rf_rdata_a;
+wire [ 4:0]  rf_raddr_b;
+wire [15:0]  rf_rdata_b;
+wire [ 4:0]  rf_waddr;
+wire [15:0]  rf_wdata;
+wire         rf_we;
+
+wire [15:0]  alu_a;
+wire [15:0]  alu_b;
+wire [ 3:0]  alu_op;
+wire [15:0]  alu_y;
+
+controller u_controller(
+    .clk         (clk_10M),
+    .reset       (reset_of_clk10M),
+    .step        (trigger),    
+    .dip_sw      (dip_sw),  
+    .leds        (leds),
+
+    .rf_raddr_a  (rf_raddr_a),
+    .rf_rdata_a  (rf_rdata_a),
+    .rf_raddr_b  (rf_raddr_b),
+    .rf_rdata_b  (rf_rdata_b),
+    .rf_waddr    (rf_waddr),
+    .rf_wdata    (rf_wdata),
+    .rf_we       (rf_we),
+
+    .alu_a       (alu_a),
+    .alu_b       (alu_b),
+    .alu_op      (alu_op),
+    .alu_y       (alu_y),
+
+    .is_rtype    (is_rtype),
+    .is_itype    (is_itype),
+    .is_peek     (is_peek),
+    .is_poke     (is_poke),
+    .imm         (imm),
+    .rd          (rd),
+    .rs1         (rs1),
+    .rs2         (rs2),
+    .opcode      (opcode),
+    .inst_reg    (inst_reg)
+);
+
+register_file u_register_file(
+    .clk         (clk_10M),
+    .reset       (reset_of_clk10M),
+    .rf_raddr_a  (rf_raddr_a),
+    .rf_rdata_a  (rf_rdata_a),
+    .rf_raddr_b  (rf_raddr_b),
+    .rf_rdata_b  (rf_rdata_b),
+    .rf_waddr    (rf_waddr),
+    .rf_wdata    (rf_wdata),
+    .rf_we       (rf_we)
+);
+
+alu u_alu(
+    .alu_a  (alu_a),
+    .alu_b  (alu_b),
+    .alu_op (alu_op),
+    .alu_y  (alu_y)
+);
 
 endmodule
