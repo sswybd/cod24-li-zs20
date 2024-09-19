@@ -1,0 +1,1382 @@
+#                 2900: poke instruction 10100011101110000000000000001010
+#                 2900: Write imm 41912 to reg #          0
+#                 3900: poke instruction 00001100001001100000000010001010
+#                 3900: Write imm  3110 to reg #          1
+#                 4900: poke instruction 10111001011001100000000100001010
+#                 4900: Write imm 47462 to reg #          2
+#                 5900: poke instruction 11100011101101100000000110001010
+#                 5900: Write imm 58294 to reg #          3
+#                 6900: poke instruction 00000000000010000000001000001010
+#                 6900: Write imm     8 to reg #          4
+#                 9450: peek instruction 00000000000000000000000000010010
+#                 9450: Read reg #          0:     0
+#                10800: peek instruction 00000000000000000000000010010010
+#                10800: Read reg #          1:  3110
+#                12150: peek instruction 00000000000000000000000100010010
+#                12150: Read reg #          2: 47462
+#                13500: peek instruction 00000000000000000000000110010010
+#                13500: Read reg #          3: 58294
+#                14850: peek instruction 00000000000000000000001000010010
+#                14850: Read reg #          4:     8
+#                16200: peek instruction 00000000000000000000001010010010
+#                16200: Read reg #          5:     0
+#                18800: r instruction 00000000001000001000000110001001 of opcode  1
+#                19250: peek instruction 00000000000000000000000110010010
+#                19250: Read  1-opcode result from reg# 3: 50572
+# ADD
+#                19850: r instruction 00000000001000001000000110010001 of opcode  2
+#                20300: peek instruction 00000000000000000000000110010010
+#                20300: Read  2-opcode result from reg# 3: 21184
+# SUB
+#                20900: r instruction 00000000001000001000000110011001 of opcode  3
+#                21350: peek instruction 00000000000000000000000110010010
+#                21350: Read  3-opcode result from reg# 3:  2086
+# AND
+#                21950: r instruction 00000000001000001000000110100001 of opcode  4
+#                22400: peek instruction 00000000000000000000000110010010
+#                22400: Read  4-opcode result from reg# 3: 48486
+# OR
+#                23000: r instruction 00000000001000001000000110101001 of opcode  5
+#                23450: peek instruction 00000000000000000000000110010010
+#                23450: Read  5-opcode result from reg# 3: 46400
+# XOR
+#                24050: r instruction 00000000001000001000000110110001 of opcode  6
+#                24500: peek instruction 00000000000000000000000110010010
+#                24500: Read  6-opcode result from reg# 3: 62425
+# NOT
+#                25100: r instruction 00000000010000001000000110111001 of opcode  7
+#                25550: peek instruction 00000000000000000000000110010010
+#                25550: Read  7-opcode result from reg# 3:  9728
+# SLL
+#                26150: r instruction 00000000010000001000000111000001 of opcode  8
+#                26600: peek instruction 00000000000000000000000110010010
+#                26600: Read  8-opcode result from reg# 3:    12
+# SRL
+#                27200: r instruction 00000000010000001000000111001001 of opcode  9
+#                27650: peek instruction 00000000000000000000000110010010
+#                27650: Read  9-opcode result from reg# 3:    12
+# SRA
+#                28250: r instruction 00000000010000001000000111010001 of opcode 10
+#                28700: peek instruction 00000000000000000000000110010010
+#                28700: Read 10-opcode result from reg# 3:  9740
+# ROL
+#                28700: two more!
+#                29300: r instruction 00000000010000010000000111000001 of opcode  8
+#                29750: peek instruction 00000000000000000000000110010010
+#                29750: Read  8-opcode result from reg# 3:   185
+# SRL
+#                30350: r instruction 00000000010000010000000111001001 of opcode  9
+#                30800: peek instruction 00000000000000000000000110010010
+#                30800: Read  9-opcode result from reg# 3: 65465
+# SRA
+#                30800: Finished small test case!!
+#                31000: poke instruction 01101110010001100000000000001010
+#                31000: Write imm 28230 to reg #          0
+#                32000: poke instruction 00001111011100100000000010001010
+#                32000: Write imm  3954 to reg #          1
+#                33000: poke instruction 11110011001011100000000100001010
+#                33000: Write imm 62254 to reg #          2
+#                34000: poke instruction 01000100011001110000000110001010
+#                34000: Write imm 17511 to reg #          3
+#                35000: poke instruction 01010101001110100000001000001010
+#                35000: Write imm 21818 to reg #          4
+#                36000: poke instruction 00011100011010100000001010001010
+#                36000: Write imm  7274 to reg #          5
+#                37000: poke instruction 11010001101101000000001100001010
+#                37000: Write imm 53684 to reg #          6
+#                38000: poke instruction 11111010011011110000001110001010
+#                38000: Write imm 64111 to reg #          7
+#                39000: poke instruction 00011010010101100000010000001010
+#                39000: Write imm  6742 to reg #          8
+#                40000: poke instruction 00110110001101010000010010001010
+#                40000: Write imm 13877 to reg #          9
+#                41000: poke instruction 01110111110101000000010100001010
+#                41000: Write imm 30676 to reg #         10
+#                42000: poke instruction 01000000101011100000010110001010
+#                42000: Write imm 16558 to reg #         11
+#                43000: poke instruction 10000001011111010000011000001010
+#                43000: Write imm 33149 to reg #         12
+#                44000: poke instruction 10110111110110110000011010001010
+#                44000: Write imm 47067 to reg #         13
+#                45000: poke instruction 00001110000001010000011100001010
+#                45000: Write imm  3589 to reg #         14
+#                46000: poke instruction 10000110111000110000011110001010
+#                46000: Write imm 34531 to reg #         15
+#                47000: poke instruction 10000011001000000000100000001010
+#                47000: Write imm 33568 to reg #         16
+#                48000: poke instruction 01100101111001010000100010001010
+#                48000: Write imm 26085 to reg #         17
+#                49000: poke instruction 01110111000001010000100100001010
+#                49000: Write imm 30469 to reg #         18
+#                50000: poke instruction 10001101001001010000100110001010
+#                50000: Write imm 36133 to reg #         19
+#                51000: poke instruction 00011110111010010000101000001010
+#                51000: Write imm  7913 to reg #         20
+#                52000: poke instruction 00100100010111010000101010001010
+#                52000: Write imm  9309 to reg #         21
+#                53000: poke instruction 10011101100010100000101100001010
+#                53000: Write imm 40330 to reg #         22
+#                54000: poke instruction 00100001010110000000101110001010
+#                54000: Write imm  8536 to reg #         23
+#                55000: poke instruction 01001001100010110000110000001010
+#                55000: Write imm 18827 to reg #         24
+#                56000: poke instruction 11010001010101100000110010001010
+#                56000: Write imm 53590 to reg #         25
+#                57000: poke instruction 10010011110010010000110100001010
+#                57000: Write imm 37833 to reg #         26
+#                58000: poke instruction 01110010101110010000110110001010
+#                58000: Write imm 29369 to reg #         27
+#                59000: poke instruction 10110001010000000000111000001010
+#                59000: Write imm 45376 to reg #         28
+#                60000: poke instruction 11010111100000000000111010001010
+#                60000: Write imm 55168 to reg #         29
+#                61000: poke instruction 10111110000011100000111100001010
+#                61000: Write imm 48654 to reg #         30
+#                62000: poke instruction 11001000110101000000111110001010
+#                62000: Write imm 51412 to reg #         31
+#                64550: peek instruction 00000000000000000000000000010010
+#                64550: Read reg #          0:     0
+#                65900: peek instruction 00000000000000000000000010010010
+#                65900: Read reg #          1:  3954
+#                67250: peek instruction 00000000000000000000000100010010
+#                67250: Read reg #          2: 62254
+#                68600: peek instruction 00000000000000000000000110010010
+#                68600: Read reg #          3: 17511
+#                69950: peek instruction 00000000000000000000001000010010
+#                69950: Read reg #          4: 21818
+#                71300: peek instruction 00000000000000000000001010010010
+#                71300: Read reg #          5:  7274
+#                72650: peek instruction 00000000000000000000001100010010
+#                72650: Read reg #          6: 53684
+#                74000: peek instruction 00000000000000000000001110010010
+#                74000: Read reg #          7: 64111
+#                75350: peek instruction 00000000000000000000010000010010
+#                75350: Read reg #          8:  6742
+#                76700: peek instruction 00000000000000000000010010010010
+#                76700: Read reg #          9: 13877
+#                78050: peek instruction 00000000000000000000010100010010
+#                78050: Read reg #         10: 30676
+#                79400: peek instruction 00000000000000000000010110010010
+#                79400: Read reg #         11: 16558
+#                80750: peek instruction 00000000000000000000011000010010
+#                80750: Read reg #         12: 33149
+#                82100: peek instruction 00000000000000000000011010010010
+#                82100: Read reg #         13: 47067
+#                83450: peek instruction 00000000000000000000011100010010
+#                83450: Read reg #         14:  3589
+#                84800: peek instruction 00000000000000000000011110010010
+#                84800: Read reg #         15: 34531
+#                86150: peek instruction 00000000000000000000100000010010
+#                86150: Read reg #         16: 33568
+#                87500: peek instruction 00000000000000000000100010010010
+#                87500: Read reg #         17: 26085
+#                88850: peek instruction 00000000000000000000100100010010
+#                88850: Read reg #         18: 30469
+#                90200: peek instruction 00000000000000000000100110010010
+#                90200: Read reg #         19: 36133
+#                91550: peek instruction 00000000000000000000101000010010
+#                91550: Read reg #         20:  7913
+#                92900: peek instruction 00000000000000000000101010010010
+#                92900: Read reg #         21:  9309
+#                94250: peek instruction 00000000000000000000101100010010
+#                94250: Read reg #         22: 40330
+#                95600: peek instruction 00000000000000000000101110010010
+#                95600: Read reg #         23:  8536
+#                96950: peek instruction 00000000000000000000110000010010
+#                96950: Read reg #         24: 18827
+#                98300: peek instruction 00000000000000000000110010010010
+#                98300: Read reg #         25: 53590
+#                99650: peek instruction 00000000000000000000110100010010
+#                99650: Read reg #         26: 37833
+#               101000: peek instruction 00000000000000000000110110010010
+#               101000: Read reg #         27: 29369
+#               102350: peek instruction 00000000000000000000111000010010
+#               102350: Read reg #         28: 45376
+#               103700: peek instruction 00000000000000000000111010010010
+#               103700: Read reg #         29: 55168
+#               105050: peek instruction 00000000000000000000111100010010
+#               105050: Read reg #         30: 48654
+#               106400: peek instruction 00000000000000000000111110010010
+#               106400: Read reg #         31: 51412
+#               109650: peek instruction 00000000000000000000000000010010
+#               109650: Read operand1 from reg# 0:     0
+#               110100: peek instruction 00000000000000000000101110010010
+#               110100: Read operand2 from reg#23:  8536
+#               110700: r instruction 00000001011100000000011100010001 of opcode  2
+#               111150: peek instruction 00000000000000000000011100010010
+#               111150: Read  2-opcode result from reg#14: 57000
+# SUB
+#               111950: peek instruction 00000000000000000000110000010010
+#               111950: Read operand1 from reg#24: 18827
+#               112250: poke instruction 00000000000001100000100010001010
+#               112250: Write imm     6 to reg #17
+#               112700: peek instruction 00000000000000000000100010010010
+#               112700: Read operand2 from reg#17:     6
+#               113300: r instruction 00000001000111000000001111010001 of opcode 10
+#               113750: peek instruction 00000000000000000000001110010010
+#               113750: Read 10-opcode result from reg# 7: 25298
+# ROL
+#               114900: peek instruction 00000000000000000000100110010010
+#               114900: Read operand1 from reg#19: 36133
+#               115350: peek instruction 00000000000000000000110100010010
+#               115350: Read operand2 from reg#26: 37833
+#               115950: r instruction 00000001101010011000101000101001 of opcode  5
+#               116400: peek instruction 00000000000000000000101000010010
+#               116400: Read  5-opcode result from reg#20:  7916
+# XOR
+#               117200: peek instruction 00000000000000000000001010010010
+#               117200: Read operand1 from reg# 5:  7274
+#               117500: poke instruction 00000000000011110000010100001010
+#               117500: Write imm    15 to reg #10
+#               117950: peek instruction 00000000000000000000010100010010
+#               117950: Read operand2 from reg#10:    15
+#               118550: r instruction 00000000101000101000101101010001 of opcode 10
+#               119000: peek instruction 00000000000000000000101100010010
+#               119000: Read 10-opcode result from reg#22:  3637
+# ROL
+#               120150: peek instruction 00000000000000000000010010010010
+#               120150: Read operand1 from reg# 9: 13877
+#               120600: peek instruction 00000000000000000000010110010010
+#               120600: Read operand2 from reg#11: 16558
+#               121200: r instruction 00000000101101001000001000010001 of opcode  2
+#               121650: peek instruction 00000000000000000000001000010010
+#               121650: Read  2-opcode result from reg# 4: 62855
+# SUB
+#               122450: peek instruction 00000000000000000000100100010010
+#               122450: Read operand1 from reg#18: 30469
+#               122750: poke instruction 00000000000001000000000010001010
+#               122750: Write imm     4 to reg # 1
+#               123200: peek instruction 00000000000000000000000010010010
+#               123200: Read operand2 from reg# 1:     4
+#               123800: r instruction 00000000000110010000001110111001 of opcode  7
+#               124250: peek instruction 00000000000000000000001110010010
+#               124250: Read  7-opcode result from reg# 7: 28752
+# SLL
+#               125400: peek instruction 00000000000000000000111010010010
+#               125400: Read operand1 from reg#29: 55168
+#               125850: peek instruction 00000000000000000000100100010010
+#               125850: Read operand2 from reg#18: 30469
+#               126450: r instruction 00000001001011101000101100011001 of opcode  3
+#               126900: peek instruction 00000000000000000000101100010010
+#               126900: Read  3-opcode result from reg#22: 22272
+# AND
+#               127700: peek instruction 00000000000000000000000000010010
+#               127700: Read operand1 from reg# 0:     0
+#               128000: poke instruction 00000000000011110000101010001010
+#               128000: Write imm    15 to reg #21
+#               128450: peek instruction 00000000000000000000101010010010
+#               128450: Read operand2 from reg#21:    15
+#               129050: r instruction 00000001010100000000110111010001 of opcode 10
+#               129500: peek instruction 00000000000000000000110110010010
+#               129500: Read 10-opcode result from reg#27:     0
+# ROL
+#               130650: peek instruction 00000000000000000000101110010010
+#               130650: Read operand1 from reg#23:  8536
+#               131100: peek instruction 00000000000000000000111010010010
+#               131100: Read operand2 from reg#29: 55168
+#               131700: r instruction 00000001110110111000000000001001 of opcode  1
+#               132150: peek instruction 00000000000000000000000000010010
+#               132150: Read  1-opcode result from reg# 0:     0
+# ADD
+# ALU result mismatch!!
+#               132950: peek instruction 00000000000000000000110100010010
+#               132950: Read operand1 from reg#26: 37833
+#               133250: poke instruction 00000000000010100000001000001010
+#               133250: Write imm    10 to reg # 4
+#               133700: peek instruction 00000000000000000000001000010010
+#               133700: Read operand2 from reg# 4:    10
+#               134300: r instruction 00000000010011010000111011000001 of opcode  8
+#               134750: peek instruction 00000000000000000000111010010010
+#               134750: Read  8-opcode result from reg#29:    36
+# SRL
+#               135900: peek instruction 00000000000000000000101010010010
+#               135900: Read operand1 from reg#21:    15
+#               136350: peek instruction 00000000000000000000111100010010
+#               136350: Read operand2 from reg#30: 48654
+#               136950: r instruction 00000001111010101000010100001001 of opcode  1
+#               137400: peek instruction 00000000000000000000010100010010
+#               137400: Read  1-opcode result from reg#10: 48669
+# ADD
+#               138200: peek instruction 00000000000000000000000110010010
+#               138200: Read operand1 from reg# 3: 17511
+#               138500: poke instruction 00000000000000000000010000001010
+#               138500: Write imm     0 to reg # 8
+#               138950: peek instruction 00000000000000000000010000010010
+#               138950: Read operand2 from reg# 8:     0
+#               139550: r instruction 00000000100000011000111101010001 of opcode 10
+#               140000: peek instruction 00000000000000000000111100010010
+#               140000: Read 10-opcode result from reg#30: 17511
+# ROL
+#               141150: peek instruction 00000000000000000000011110010010
+#               141150: Read operand1 from reg#15: 34531
+#               141600: peek instruction 00000000000000000000101110010010
+#               141600: Read operand2 from reg#23:  8536
+#               142200: r instruction 00000001011101111000100110100001 of opcode  4
+#               142650: peek instruction 00000000000000000000100110010010
+#               142650: Read  4-opcode result from reg#19: 43003
+# OR
+#               143450: peek instruction 00000000000000000000000000010010
+#               143450: Read operand1 from reg# 0:     0
+#               143750: poke instruction 00000000000001010000010010001010
+#               143750: Write imm     5 to reg # 9
+#               144200: peek instruction 00000000000000000000010010010010
+#               144200: Read operand2 from reg# 9:     5
+#               144800: r instruction 00000000100100000000001111000001 of opcode  8
+#               145250: peek instruction 00000000000000000000001110010010
+#               145250: Read  8-opcode result from reg# 7:     0
+# SRL
+#               146400: peek instruction 00000000000000000000000000010010
+#               146400: Read operand1 from reg# 0:     0
+#               146850: peek instruction 00000000000000000000011110010010
+#               146850: Read operand2 from reg#15: 34531
+#               147450: r instruction 00000000111100000000001000110001 of opcode  6
+#               147900: peek instruction 00000000000000000000001000010010
+#               147900: Read  6-opcode result from reg# 4: 65535
+# NOT
+#               148700: peek instruction 00000000000000000000011010010010
+#               148700: Read operand1 from reg#13: 47067
+#               149000: poke instruction 00000000000001100000011000001010
+#               149000: Write imm     6 to reg #12
+#               149450: peek instruction 00000000000000000000011000010010
+#               149450: Read operand2 from reg#12:     6
+#               150050: r instruction 00000000110001101000001011000001 of opcode  8
+#               150500: peek instruction 00000000000000000000001010010010
+#               150500: Read  8-opcode result from reg# 5:   735
+# SRL
+#               151650: peek instruction 00000000000000000000001010010010
+#               151650: Read operand1 from reg# 5:   735
+#               152100: peek instruction 00000000000000000000001110010010
+#               152100: Read operand2 from reg# 7:     0
+#               152700: r instruction 00000000011100101000111000110001 of opcode  6
+#               153150: peek instruction 00000000000000000000111000010010
+#               153150: Read  6-opcode result from reg#28: 64800
+# NOT
+#               153950: peek instruction 00000000000000000000000010010010
+#               153950: Read operand1 from reg# 1:     4
+#               154250: poke instruction 00000000000000010000001010001010
+#               154250: Write imm     1 to reg # 5
+#               154700: peek instruction 00000000000000000000001010010010
+#               154700: Read operand2 from reg# 5:     1
+#               155300: r instruction 00000000010100001000111100111001 of opcode  7
+#               155750: peek instruction 00000000000000000000111100010010
+#               155750: Read  7-opcode result from reg#30:     8
+# SLL
+#               156900: peek instruction 00000000000000000000000000010010
+#               156900: Read operand1 from reg# 0:     0
+#               157350: peek instruction 00000000000000000000001000010010
+#               157350: Read operand2 from reg# 4: 65535
+#               157950: r instruction 00000000010000000000101010010001 of opcode  2
+#               158400: peek instruction 00000000000000000000101010010010
+#               158400: Read  2-opcode result from reg#21:     1
+# SUB
+#               159200: peek instruction 00000000000000000000111010010010
+#               159200: Read operand1 from reg#29:    36
+#               159500: poke instruction 00000000000000110000011000001010
+#               159500: Write imm     3 to reg #12
+#               159950: peek instruction 00000000000000000000011000010010
+#               159950: Read operand2 from reg#12:     3
+#               160550: r instruction 00000000110011101000010001010001 of opcode 10
+#               161000: peek instruction 00000000000000000000010000010010
+#               161000: Read 10-opcode result from reg# 8:   288
+# ROL
+#               162150: peek instruction 00000000000000000000000010010010
+#               162150: Read operand1 from reg# 1:     4
+#               162600: peek instruction 00000000000000000000100100010010
+#               162600: Read operand2 from reg#18: 30469
+#               163200: r instruction 00000001001000001000010100011001 of opcode  3
+#               163650: peek instruction 00000000000000000000010100010010
+#               163650: Read  3-opcode result from reg#10:     4
+# AND
+#               164450: peek instruction 00000000000000000000101000010010
+#               164450: Read operand1 from reg#20:  7916
+#               164750: poke instruction 00000000000010100000000010001010
+#               164750: Write imm    10 to reg # 1
+#               165200: peek instruction 00000000000000000000000010010010
+#               165200: Read operand2 from reg# 1:    10
+#               165800: r instruction 00000000000110100000001101000001 of opcode  8
+#               166250: peek instruction 00000000000000000000001100010010
+#               166250: Read  8-opcode result from reg# 6:     7
+# SRL
+#               167400: peek instruction 00000000000000000000010010010010
+#               167400: Read operand1 from reg# 9:     5
+#               167850: peek instruction 00000000000000000000001100010010
+#               167850: Read operand2 from reg# 6:     7
+#               168450: r instruction 00000000011001001000000000011001 of opcode  3
+#               168900: peek instruction 00000000000000000000000000010010
+#               168900: Read  3-opcode result from reg# 0:     0
+# AND
+# ALU result mismatch!!
+#               169700: peek instruction 00000000000000000000010100010010
+#               169700: Read operand1 from reg#10:     4
+#               170000: poke instruction 00000000000011010000010000001010
+#               170000: Write imm    13 to reg # 8
+#               170450: peek instruction 00000000000000000000010000010010
+#               170450: Read operand2 from reg# 8:    13
+#               171050: r instruction 00000000100001010000111101010001 of opcode 10
+#               171500: peek instruction 00000000000000000000111100010010
+#               171500: Read 10-opcode result from reg#30: 32768
+# ROL
+#               172650: peek instruction 00000000000000000000111100010010
+#               172650: Read operand1 from reg#30: 32768
+#               173100: peek instruction 00000000000000000000001100010010
+#               173100: Read operand2 from reg# 6:     7
+#               173700: r instruction 00000000011011110000011000001001 of opcode  1
+#               174150: peek instruction 00000000000000000000011000010010
+#               174150: Read  1-opcode result from reg#12: 32775
+# ADD
+#               174950: peek instruction 00000000000000000000111100010010
+#               174950: Read operand1 from reg#30: 32768
+#               175250: poke instruction 00000000000011000000001000001010
+#               175250: Write imm    12 to reg # 4
+#               175700: peek instruction 00000000000000000000001000010010
+#               175700: Read operand2 from reg# 4:    12
+#               176300: r instruction 00000000010011110000001011000001 of opcode  8
+#               176750: peek instruction 00000000000000000000001010010010
+#               176750: Read  8-opcode result from reg# 5:     8
+# SRL
+#               177900: peek instruction 00000000000000000000111010010010
+#               177900: Read operand1 from reg#29:    36
+#               178350: peek instruction 00000000000000000000111110010010
+#               178350: Read operand2 from reg#31: 51412
+#               178950: r instruction 00000001111111101000101100110001 of opcode  6
+#               179400: peek instruction 00000000000000000000101100010010
+#               179400: Read  6-opcode result from reg#22: 65499
+# NOT
+#               180200: peek instruction 00000000000000000000000010010010
+#               180200: Read operand1 from reg# 1:    10
+#               180500: poke instruction 00000000000010100000011010001010
+#               180500: Write imm    10 to reg #13
+#               180950: peek instruction 00000000000000000000011010010010
+#               180950: Read operand2 from reg#13:    10
+#               181550: r instruction 00000000110100001000110011010001 of opcode 10
+#               182000: peek instruction 00000000000000000000110010010010
+#               182000: Read 10-opcode result from reg#25: 10240
+# ROL
+#               183150: peek instruction 00000000000000000000001010010010
+#               183150: Read operand1 from reg# 5:     8
+#               183600: peek instruction 00000000000000000000110100010010
+#               183600: Read operand2 from reg#26: 37833
+#               184200: r instruction 00000001101000101000100010101001 of opcode  5
+#               184650: peek instruction 00000000000000000000100010010010
+#               184650: Read  5-opcode result from reg#17: 37825
+# XOR
+#               185450: peek instruction 00000000000000000000101100010010
+#               185450: Read operand1 from reg#22: 65499
+#               185750: poke instruction 00000000000001100000011100001010
+#               185750: Write imm     6 to reg #14
+#               186200: peek instruction 00000000000000000000011100010010
+#               186200: Read operand2 from reg#14:     6
+#               186800: r instruction 00000000111010110000010000111001 of opcode  7
+#               187250: peek instruction 00000000000000000000010000010010
+#               187250: Read  7-opcode result from reg# 8: 63168
+# SLL
+#               188400: peek instruction 00000000000000000000111000010010
+#               188400: Read operand1 from reg#28: 64800
+#               188850: peek instruction 00000000000000000000011010010010
+#               188850: Read operand2 from reg#13:    10
+#               189450: r instruction 00000000110111100000100010110001 of opcode  6
+#               189900: peek instruction 00000000000000000000100010010010
+#               189900: Read  6-opcode result from reg#17:   735
+# NOT
+#               190700: peek instruction 00000000000000000000001100010010
+#               190700: Read operand1 from reg# 6:     7
+#               191000: poke instruction 00000000000010010000100000001010
+#               191000: Write imm     9 to reg #16
+#               191450: peek instruction 00000000000000000000100000010010
+#               191450: Read operand2 from reg#16:     9
+#               192050: r instruction 00000001000000110000101111010001 of opcode 10
+#               192500: peek instruction 00000000000000000000101110010010
+#               192500: Read 10-opcode result from reg#23:  3584
+# ROL
+#               193650: peek instruction 00000000000000000000101100010010
+#               193650: Read operand1 from reg#22: 65499
+#               194100: peek instruction 00000000000000000000010000010010
+#               194100: Read operand2 from reg# 8: 63168
+#               194700: r instruction 00000000100010110000111000101001 of opcode  5
+#               195150: peek instruction 00000000000000000000111000010010
+#               195150: Read  5-opcode result from reg#28:  2331
+# XOR
+#               195950: peek instruction 00000000000000000000110010010010
+#               195950: Read operand1 from reg#25: 10240
+#               196250: poke instruction 00000000000000000000100110001010
+#               196250: Write imm     0 to reg #19
+#               196700: peek instruction 00000000000000000000100110010010
+#               196700: Read operand2 from reg#19:     0
+#               197300: r instruction 00000001001111001000001100111001 of opcode  7
+#               197750: peek instruction 00000000000000000000001100010010
+#               197750: Read  7-opcode result from reg# 6: 10240
+# SLL
+#               198900: peek instruction 00000000000000000000010000010010
+#               198900: Read operand1 from reg# 8: 63168
+#               199350: peek instruction 00000000000000000000010110010010
+#               199350: Read operand2 from reg#11: 16558
+#               199950: r instruction 00000000101101000000001110011001 of opcode  3
+#               200400: peek instruction 00000000000000000000001110010010
+#               200400: Read  3-opcode result from reg# 7: 16512
+# AND
+#               201200: peek instruction 00000000000000000000011100010010
+#               201200: Read operand1 from reg#14:     6
+#               201500: poke instruction 00000000000000000000011000001010
+#               201500: Write imm     0 to reg #12
+#               201950: peek instruction 00000000000000000000011000010010
+#               201950: Read operand2 from reg#12:     0
+#               202550: r instruction 00000000110001110000010101010001 of opcode 10
+#               203000: peek instruction 00000000000000000000010100010010
+#               203000: Read 10-opcode result from reg#10:     6
+# ROL
+#               204150: peek instruction 00000000000000000000101010010010
+#               204150: Read operand1 from reg#21:     1
+#               204600: peek instruction 00000000000000000000010100010010
+#               204600: Read operand2 from reg#10:     6
+#               205200: r instruction 00000000101010101000100010100001 of opcode  4
+#               205650: peek instruction 00000000000000000000100010010010
+#               205650: Read  4-opcode result from reg#17:     7
+# OR
+#               206450: peek instruction 00000000000000000000001000010010
+#               206450: Read operand1 from reg# 4:    12
+#               206750: poke instruction 00000000000010110000101100001010
+#               206750: Write imm    11 to reg #22
+#               207200: peek instruction 00000000000000000000101100010010
+#               207200: Read operand2 from reg#22:    11
+#               207800: r instruction 00000001011000100000101010111001 of opcode  7
+#               208250: peek instruction 00000000000000000000101010010010
+#               208250: Read  7-opcode result from reg#21: 24576
+# SLL
+#               209400: peek instruction 00000000000000000000100010010010
+#               209400: Read operand1 from reg#17:     7
+#               209850: peek instruction 00000000000000000000111000010010
+#               209850: Read operand2 from reg#28:  2331
+#               210450: r instruction 00000001110010001000101000010001 of opcode  2
+#               210900: peek instruction 00000000000000000000101000010010
+#               210900: Read  2-opcode result from reg#20: 63212
+# SUB
+#               211700: peek instruction 00000000000000000000011000010010
+#               211700: Read operand1 from reg#12:     0
+#               212000: poke instruction 00000000000100000000111100001010
+#               212000: Write imm    16 to reg #30
+#               212450: peek instruction 00000000000000000000111100010010
+#               212450: Read operand2 from reg#30:    16
+#               213050: r instruction 00000001111001100000010111000001 of opcode  8
+#               213500: peek instruction 00000000000000000000010110010010
+#               213500: Read  8-opcode result from reg#11:     0
+# SRL
+#               214650: peek instruction 00000000000000000000000010010010
+#               214650: Read operand1 from reg# 1:    10
+#               215100: peek instruction 00000000000000000000000000010010
+#               215100: Read operand2 from reg# 0:     0
+#               215700: r instruction 00000000000000001000111100101001 of opcode  5
+#               216150: peek instruction 00000000000000000000111100010010
+#               216150: Read  5-opcode result from reg#30:    10
+# XOR
+#               216950: peek instruction 00000000000000000000011010010010
+#               216950: Read operand1 from reg#13:    10
+#               217250: poke instruction 00000000000010100000010100001010
+#               217250: Write imm    10 to reg #10
+#               217700: peek instruction 00000000000000000000010100010010
+#               217700: Read operand2 from reg#10:    10
+#               218300: r instruction 00000000101001101000010001000001 of opcode  8
+#               218750: peek instruction 00000000000000000000010000010010
+#               218750: Read  8-opcode result from reg# 8:     0
+# SRL
+#               219900: peek instruction 00000000000000000000101100010010
+#               219900: Read operand1 from reg#22:    11
+#               220350: peek instruction 00000000000000000000111100010010
+#               220350: Read operand2 from reg#30:    10
+#               220950: r instruction 00000001111010110000101000011001 of opcode  3
+#               221400: peek instruction 00000000000000000000101000010010
+#               221400: Read  3-opcode result from reg#20:    10
+# AND
+#               222200: peek instruction 00000000000000000000011110010010
+#               222200: Read operand1 from reg#15: 34531
+#               222500: poke instruction 00000000000010110000011110001010
+#               222500: Write imm    11 to reg #15
+#               222950: peek instruction 00000000000000000000011110010010
+#               222950: Read operand2 from reg#15:    11
+#               223550: r instruction 00000000111101111000010001000001 of opcode  8
+#               224000: peek instruction 00000000000000000000010000010010
+#               224000: Read  8-opcode result from reg# 8:     0
+# SRL
+# ALU result mismatch!!
+#               225150: peek instruction 00000000000000000000111010010010
+#               225150: Read operand1 from reg#29:    36
+#               225600: peek instruction 00000000000000000000010000010010
+#               225600: Read operand2 from reg# 8:     0
+#               226200: r instruction 00000000100011101000101010011001 of opcode  3
+#               226650: peek instruction 00000000000000000000101010010010
+#               226650: Read  3-opcode result from reg#21:     0
+# AND
+#               227450: peek instruction 00000000000000000000100000010010
+#               227450: Read operand1 from reg#16:     9
+#               227750: poke instruction 00000000000000000000101100001010
+#               227750: Write imm     0 to reg #22
+#               228200: peek instruction 00000000000000000000101100010010
+#               228200: Read operand2 from reg#22:     0
+#               228800: r instruction 00000001011010000000110110111001 of opcode  7
+#               229250: peek instruction 00000000000000000000110110010010
+#               229250: Read  7-opcode result from reg#27:     9
+# SLL
+#               230400: peek instruction 00000000000000000000000000010010
+#               230400: Read operand1 from reg# 0:     0
+#               230850: peek instruction 00000000000000000000001100010010
+#               230850: Read operand2 from reg# 6: 10240
+#               231450: r instruction 00000000011000000000111100001001 of opcode  1
+#               231900: peek instruction 00000000000000000000111100010010
+#               231900: Read  1-opcode result from reg#30: 10240
+# ADD
+#               232700: peek instruction 00000000000000000000100010010010
+#               232700: Read operand1 from reg#17:     7
+#               233000: poke instruction 00000000000010100000011100001010
+#               233000: Write imm    10 to reg #14
+#               233450: peek instruction 00000000000000000000011100010010
+#               233450: Read operand2 from reg#14:    10
+#               234050: r instruction 00000000111010001000110111000001 of opcode  8
+#               234500: peek instruction 00000000000000000000110110010010
+#               234500: Read  8-opcode result from reg#27:     0
+# SRL
+#               235650: peek instruction 00000000000000000000001100010010
+#               235650: Read operand1 from reg# 6: 10240
+#               236100: peek instruction 00000000000000000000001100010010
+#               236100: Read operand2 from reg# 6: 10240
+#               236700: r instruction 00000000011000110000100000010001 of opcode  2
+#               237150: peek instruction 00000000000000000000100000010010
+#               237150: Read  2-opcode result from reg#16:     0
+# SUB
+#               237950: peek instruction 00000000000000000000100100010010
+#               237950: Read operand1 from reg#18: 30469
+#               238250: poke instruction 00000000000001110000001110001010
+#               238250: Write imm     7 to reg # 7
+#               238700: peek instruction 00000000000000000000001110010010
+#               238700: Read operand2 from reg# 7:     7
+#               239300: r instruction 00000000011110010000100111010001 of opcode 10
+#               239750: peek instruction 00000000000000000000100110010010
+#               239750: Read 10-opcode result from reg#19: 33467
+# ROL
+#               240900: peek instruction 00000000000000000000010100010010
+#               240900: Read operand1 from reg#10:    10
+#               241350: peek instruction 00000000000000000000011110010010
+#               241350: Read operand2 from reg#15:    11
+#               241950: r instruction 00000000111101010000010110100001 of opcode  4
+#               242400: peek instruction 00000000000000000000010110010010
+#               242400: Read  4-opcode result from reg#11:    11
+# OR
+#               243200: peek instruction 00000000000000000000011110010010
+#               243200: Read operand1 from reg#15:    11
+#               243500: poke instruction 00000000000000100000010100001010
+#               243500: Write imm     2 to reg #10
+#               243950: peek instruction 00000000000000000000010100010010
+#               243950: Read operand2 from reg#10:     2
+#               244550: r instruction 00000000101001111000010011001001 of opcode  9
+#               245000: peek instruction 00000000000000000000010010010010
+#               245000: Read  9-opcode result from reg# 9:     2
+# SRA
+#               246150: peek instruction 00000000000000000000111000010010
+#               246150: Read operand1 from reg#28:  2331
+#               246600: peek instruction 00000000000000000000101000010010
+#               246600: Read operand2 from reg#20:    10
+#               247200: r instruction 00000001010011100000010010011001 of opcode  3
+#               247650: peek instruction 00000000000000000000010010010010
+#               247650: Read  3-opcode result from reg# 9:    10
+# AND
+#               248450: peek instruction 00000000000000000000111000010010
+#               248450: Read operand1 from reg#28:  2331
+#               248750: poke instruction 00000000000000010000100100001010
+#               248750: Write imm     1 to reg #18
+#               249200: peek instruction 00000000000000000000100100010010
+#               249200: Read operand2 from reg#18:     1
+#               249800: r instruction 00000001001011100000100011010001 of opcode 10
+#               250250: peek instruction 00000000000000000000100010010010
+#               250250: Read 10-opcode result from reg#17:  4662
+# ROL
+#               251400: peek instruction 00000000000000000000100110010010
+#               251400: Read operand1 from reg#19: 33467
+#               251850: peek instruction 00000000000000000000000010010010
+#               251850: Read operand2 from reg# 1:    10
+#               252450: r instruction 00000000000110011000000010110001 of opcode  6
+#               252900: peek instruction 00000000000000000000000010010010
+#               252900: Read  6-opcode result from reg# 1: 32068
+# NOT
+#               253700: peek instruction 00000000000000000000111010010010
+#               253700: Read operand1 from reg#29:    36
+#               254000: poke instruction 00000000000100000000101010001010
+#               254000: Write imm    16 to reg #21
+#               254450: peek instruction 00000000000000000000101010010010
+#               254450: Read operand2 from reg#21:    16
+#               255050: r instruction 00000001010111101000100111001001 of opcode  9
+#               255500: peek instruction 00000000000000000000100110010010
+#               255500: Read  9-opcode result from reg#19:     0
+# SRA
+#               256650: peek instruction 00000000000000000000011110010010
+#               256650: Read operand1 from reg#15:    11
+#               257100: peek instruction 00000000000000000000011100010010
+#               257100: Read operand2 from reg#14:    10
+#               257700: r instruction 00000000111001111000000010101001 of opcode  5
+#               258150: peek instruction 00000000000000000000000010010010
+#               258150: Read  5-opcode result from reg# 1:     1
+# XOR
+#               258950: peek instruction 00000000000000000000101010010010
+#               258950: Read operand1 from reg#21:    16
+#               259250: poke instruction 00000000000011100000000010001010
+#               259250: Write imm    14 to reg # 1
+#               259700: peek instruction 00000000000000000000000010010010
+#               259700: Read operand2 from reg# 1:    14
+#               260300: r instruction 00000000000110101000010110111001 of opcode  7
+#               260750: peek instruction 00000000000000000000010110010010
+#               260750: Read  7-opcode result from reg#11:     0
+# SLL
+#               261900: peek instruction 00000000000000000000110110010010
+#               261900: Read operand1 from reg#27:     0
+#               262350: peek instruction 00000000000000000000000000010010
+#               262350: Read operand2 from reg# 0:     0
+#               262950: r instruction 00000000000011011000011110011001 of opcode  3
+#               263400: peek instruction 00000000000000000000011110010010
+#               263400: Read  3-opcode result from reg#15:     0
+# AND
+#               264200: peek instruction 00000000000000000000110010010010
+#               264200: Read operand1 from reg#25: 10240
+#               264500: poke instruction 00000000000010010000100110001010
+#               264500: Write imm     9 to reg #19
+#               264950: peek instruction 00000000000000000000100110010010
+#               264950: Read operand2 from reg#19:     9
+#               265550: r instruction 00000001001111001000011001000001 of opcode  8
+#               266000: peek instruction 00000000000000000000011000010010
+#               266000: Read  8-opcode result from reg#12:    20
+# SRL
+#               267150: peek instruction 00000000000000000000111000010010
+#               267150: Read operand1 from reg#28:  2331
+#               267600: peek instruction 00000000000000000000101000010010
+#               267600: Read operand2 from reg#20:    10
+#               268200: r instruction 00000001010011100000001100010001 of opcode  2
+#               268650: peek instruction 00000000000000000000001100010010
+#               268650: Read  2-opcode result from reg# 6:  2321
+# SUB
+#               269450: peek instruction 00000000000000000000011000010010
+#               269450: Read operand1 from reg#12:    20
+#               269750: poke instruction 00000000000100000000110000001010
+#               269750: Write imm    16 to reg #24
+#               270200: peek instruction 00000000000000000000110000010010
+#               270200: Read operand2 from reg#24:    16
+#               270800: r instruction 00000001100001100000011011010001 of opcode 10
+#               271250: peek instruction 00000000000000000000011010010010
+#               271250: Read 10-opcode result from reg#13:    20
+# ROL
+#               272400: peek instruction 00000000000000000000110000010010
+#               272400: Read operand1 from reg#24:    16
+#               272850: peek instruction 00000000000000000000000010010010
+#               272850: Read operand2 from reg# 1:    14
+#               273450: r instruction 00000000000111000000100000101001 of opcode  5
+#               273900: peek instruction 00000000000000000000100000010010
+#               273900: Read  5-opcode result from reg#16:    30
+# XOR
+#               274700: peek instruction 00000000000000000000000100010010
+#               274700: Read operand1 from reg# 2: 62254
+#               275000: poke instruction 00000000000010010000010000001010
+#               275000: Write imm     9 to reg # 8
+#               275450: peek instruction 00000000000000000000010000010010
+#               275450: Read operand2 from reg# 8:     9
+#               276050: r instruction 00000000100000010000010100111001 of opcode  7
+#               276500: peek instruction 00000000000000000000010100010010
+#               276500: Read  7-opcode result from reg#10: 23552
+# SLL
+#               277650: peek instruction 00000000000000000000101100010010
+#               277650: Read operand1 from reg#22:     0
+#               278100: peek instruction 00000000000000000000100000010010
+#               278100: Read operand2 from reg#16:    30
+#               278700: r instruction 00000001000010110000001100011001 of opcode  3
+#               279150: peek instruction 00000000000000000000001100010010
+#               279150: Read  3-opcode result from reg# 6:     0
+# AND
+#               279950: peek instruction 00000000000000000000101110010010
+#               279950: Read operand1 from reg#23:  3584
+#               280250: poke instruction 00000000000000100000101100001010
+#               280250: Write imm     2 to reg #22
+#               280700: peek instruction 00000000000000000000101100010010
+#               280700: Read operand2 from reg#22:     2
+#               281300: r instruction 00000001011010111000100111001001 of opcode  9
+#               281750: peek instruction 00000000000000000000100110010010
+#               281750: Read  9-opcode result from reg#19:   896
+# SRA
+#               282900: peek instruction 00000000000000000000001000010010
+#               282900: Read operand1 from reg# 4:    12
+#               283350: peek instruction 00000000000000000000111000010010
+#               283350: Read operand2 from reg#28:  2331
+#               283950: r instruction 00000001110000100000010010011001 of opcode  3
+#               284400: peek instruction 00000000000000000000010010010010
+#               284400: Read  3-opcode result from reg# 9:     8
+# AND
+#               285200: peek instruction 00000000000000000000010110010010
+#               285200: Read operand1 from reg#11:     0
+#               285500: poke instruction 00000000000010100000001000001010
+#               285500: Write imm    10 to reg # 4
+#               285950: peek instruction 00000000000000000000001000010010
+#               285950: Read operand2 from reg# 4:    10
+#               286550: r instruction 00000000010001011000110001000001 of opcode  8
+#               287000: peek instruction 00000000000000000000110000010010
+#               287000: Read  8-opcode result from reg#24:     0
+# SRL
+#               288150: peek instruction 00000000000000000000000100010010
+#               288150: Read operand1 from reg# 2: 62254
+#               288600: peek instruction 00000000000000000000000010010010
+#               288600: Read operand2 from reg# 1:    14
+#               289200: r instruction 00000000000100010000010110101001 of opcode  5
+#               289650: peek instruction 00000000000000000000010110010010
+#               289650: Read  5-opcode result from reg#11: 62240
+# XOR
+#               290450: peek instruction 00000000000000000000101000010010
+#               290450: Read operand1 from reg#20:    10
+#               290750: poke instruction 00000000000000010000011110001010
+#               290750: Write imm     1 to reg #15
+#               291200: peek instruction 00000000000000000000011110010010
+#               291200: Read operand2 from reg#15:     1
+#               291800: r instruction 00000000111110100000010001010001 of opcode 10
+#               292250: peek instruction 00000000000000000000010000010010
+#               292250: Read 10-opcode result from reg# 8:    20
+# ROL
+#               293400: peek instruction 00000000000000000000110110010010
+#               293400: Read operand1 from reg#27:     0
+#               293850: peek instruction 00000000000000000000001000010010
+#               293850: Read operand2 from reg# 4:    10
+#               294450: r instruction 00000000010011011000100110001001 of opcode  1
+#               294900: peek instruction 00000000000000000000100110010010
+#               294900: Read  1-opcode result from reg#19:    10
+# ADD
+#               295700: peek instruction 00000000000000000000001110010010
+#               295700: Read operand1 from reg# 7:     7
+#               296000: poke instruction 00000000000001000000010100001010
+#               296000: Write imm     4 to reg #10
+#               296450: peek instruction 00000000000000000000010100010010
+#               296450: Read operand2 from reg#10:     4
+#               297050: r instruction 00000000101000111000100100111001 of opcode  7
+#               297500: peek instruction 00000000000000000000100100010010
+#               297500: Read  7-opcode result from reg#18:   112
+# SLL
+#               298650: peek instruction 00000000000000000000001010010010
+#               298650: Read operand1 from reg# 5:     8
+#               299100: peek instruction 00000000000000000000110100010010
+#               299100: Read operand2 from reg#26: 37833
+#               299700: r instruction 00000001101000101000011000011001 of opcode  3
+#               300150: peek instruction 00000000000000000000011000010010
+#               300150: Read  3-opcode result from reg#12:     8
+# AND
+#               300950: peek instruction 00000000000000000000001010010010
+#               300950: Read operand1 from reg# 5:     8
+#               301250: poke instruction 00000000000001010000110110001010
+#               301250: Write imm     5 to reg #27
+#               301700: peek instruction 00000000000000000000110110010010
+#               301700: Read operand2 from reg#27:     5
+#               302300: r instruction 00000001101100101000100011001001 of opcode  9
+#               302750: peek instruction 00000000000000000000100010010010
+#               302750: Read  9-opcode result from reg#17:     0
+# SRA
+#               303900: peek instruction 00000000000000000000111100010010
+#               303900: Read operand1 from reg#30: 10240
+#               304350: peek instruction 00000000000000000000110000010010
+#               304350: Read operand2 from reg#24:     0
+#               304950: r instruction 00000001100011110000010110100001 of opcode  4
+#               305400: peek instruction 00000000000000000000010110010010
+#               305400: Read  4-opcode result from reg#11: 10240
+# OR
+#               306200: peek instruction 00000000000000000000110000010010
+#               306200: Read operand1 from reg#24:     0
+#               306500: poke instruction 00000000000001110000111000001010
+#               306500: Write imm     7 to reg #28
+#               306950: peek instruction 00000000000000000000111000010010
+#               306950: Read operand2 from reg#28:     7
+#               307550: r instruction 00000001110011000000001011010001 of opcode 10
+#               308000: peek instruction 00000000000000000000001010010010
+#               308000: Read 10-opcode result from reg# 5:     0
+# ROL
+#               309150: peek instruction 00000000000000000000000000010010
+#               309150: Read operand1 from reg# 0:     0
+#               309600: peek instruction 00000000000000000000001010010010
+#               309600: Read operand2 from reg# 5:     0
+#               310200: r instruction 00000000010100000000010100100001 of opcode  4
+#               310650: peek instruction 00000000000000000000010100010010
+#               310650: Read  4-opcode result from reg#10:     0
+# OR
+#               311450: peek instruction 00000000000000000000100100010010
+#               311450: Read operand1 from reg#18:   112
+#               311750: poke instruction 00000000000010100000001010001010
+#               311750: Write imm    10 to reg # 5
+#               312200: peek instruction 00000000000000000000001010010010
+#               312200: Read operand2 from reg# 5:    10
+#               312800: r instruction 00000000010110010000100011010001 of opcode 10
+#               313250: peek instruction 00000000000000000000100010010010
+#               313250: Read 10-opcode result from reg#17: 49153
+# ROL
+#               314400: peek instruction 00000000000000000000000010010010
+#               314400: Read operand1 from reg# 1:    14
+#               314850: peek instruction 00000000000000000000010100010010
+#               314850: Read operand2 from reg#10:     0
+#               315450: r instruction 00000000101000001000111010010001 of opcode  2
+#               315900: peek instruction 00000000000000000000111010010010
+#               315900: Read  2-opcode result from reg#29:    14
+# SUB
+#               316700: peek instruction 00000000000000000000111010010010
+#               316700: Read operand1 from reg#29:    14
+#               317000: poke instruction 00000000000011000000101110001010
+#               317000: Write imm    12 to reg #23
+#               317450: peek instruction 00000000000000000000101110010010
+#               317450: Read operand2 from reg#23:    12
+#               318050: r instruction 00000001011111101000100111010001 of opcode 10
+#               318500: peek instruction 00000000000000000000100110010010
+#               318500: Read 10-opcode result from reg#19: 57344
+# ROL
+#               319650: peek instruction 00000000000000000000011000010010
+#               319650: Read operand1 from reg#12:     8
+#               320100: peek instruction 00000000000000000000110100010010
+#               320100: Read operand2 from reg#26: 37833
+#               320700: r instruction 00000001101001100000100010100001 of opcode  4
+#               321150: peek instruction 00000000000000000000100010010010
+#               321150: Read  4-opcode result from reg#17: 37833
+# OR
+#               321950: peek instruction 00000000000000000000001000010010
+#               321950: Read operand1 from reg# 4:    10
+#               322250: poke instruction 00000000000010110000101000001010
+#               322250: Write imm    11 to reg #20
+#               322700: peek instruction 00000000000000000000101000010010
+#               322700: Read operand2 from reg#20:    11
+#               323300: r instruction 00000001010000100000110111010001 of opcode 10
+#               323750: peek instruction 00000000000000000000110110010010
+#               323750: Read 10-opcode result from reg#27: 20480
+# ROL
+#               324900: peek instruction 00000000000000000000000100010010
+#               324900: Read operand1 from reg# 2: 62254
+#               325350: peek instruction 00000000000000000000000000010010
+#               325350: Read operand2 from reg# 0:     0
+#               325950: r instruction 00000000000000010000110000100001 of opcode  4
+#               326400: peek instruction 00000000000000000000110000010010
+#               326400: Read  4-opcode result from reg#24: 62254
+# OR
+#               327200: peek instruction 00000000000000000000100010010010
+#               327200: Read operand1 from reg#17: 37833
+#               327500: poke instruction 00000000000100000000100110001010
+#               327500: Write imm    16 to reg #19
+#               327950: peek instruction 00000000000000000000100110010010
+#               327950: Read operand2 from reg#19:    16
+#               328550: r instruction 00000001001110001000111101010001 of opcode 10
+#               329000: peek instruction 00000000000000000000111100010010
+#               329000: Read 10-opcode result from reg#30: 37833
+# ROL
+#               330150: peek instruction 00000000000000000000111110010010
+#               330150: Read operand1 from reg#31: 51412
+#               330600: peek instruction 00000000000000000000100110010010
+#               330600: Read operand2 from reg#19:    16
+#               331200: r instruction 00000001001111111000110110001001 of opcode  1
+#               331650: peek instruction 00000000000000000000110110010010
+#               331650: Read  1-opcode result from reg#27: 51428
+# ADD
+#               332450: peek instruction 00000000000000000000100010010010
+#               332450: Read operand1 from reg#17: 37833
+#               332750: poke instruction 00000000000010000000000110001010
+#               332750: Write imm     8 to reg # 3
+#               333200: peek instruction 00000000000000000000000110010010
+#               333200: Read operand2 from reg# 3:     8
+#               333800: r instruction 00000000001110001000110000111001 of opcode  7
+#               334250: peek instruction 00000000000000000000110000010010
+#               334250: Read  7-opcode result from reg#24: 51456
+# SLL
+#               335400: peek instruction 00000000000000000000110110010010
+#               335400: Read operand1 from reg#27: 51428
+#               335850: peek instruction 00000000000000000000000100010010
+#               335850: Read operand2 from reg# 2: 62254
+#               336450: r instruction 00000000001011011000011110101001 of opcode  5
+#               336900: peek instruction 00000000000000000000011110010010
+#               336900: Read  5-opcode result from reg#15: 15306
+# XOR
+#               337700: peek instruction 00000000000000000000001100010010
+#               337700: Read operand1 from reg# 6:     0
+#               338000: poke instruction 00000000000000100000000110001010
+#               338000: Write imm     2 to reg # 3
+#               338450: peek instruction 00000000000000000000000110010010
+#               338450: Read operand2 from reg# 3:     2
+#               339050: r instruction 00000000001100110000111101010001 of opcode 10
+#               339500: peek instruction 00000000000000000000111100010010
+#               339500: Read 10-opcode result from reg#30:     0
+# ROL
+#               340650: peek instruction 00000000000000000000111100010010
+#               340650: Read operand1 from reg#30:     0
+#               341100: peek instruction 00000000000000000000100000010010
+#               341100: Read operand2 from reg#16:    30
+#               341700: r instruction 00000001000011110000000100110001 of opcode  6
+#               342150: peek instruction 00000000000000000000000100010010
+#               342150: Read  6-opcode result from reg# 2: 65535
+# NOT
+#               342950: peek instruction 00000000000000000000111100010010
+#               342950: Read operand1 from reg#30:     0
+#               343250: poke instruction 00000000000000000000011100001010
+#               343250: Write imm     0 to reg #14
+#               343700: peek instruction 00000000000000000000011100010010
+#               343700: Read operand2 from reg#14:     0
+#               344300: r instruction 00000000111011110000110011000001 of opcode  8
+#               344750: peek instruction 00000000000000000000110010010010
+#               344750: Read  8-opcode result from reg#25:     0
+# SRL
+#               345900: peek instruction 00000000000000000000010000010010
+#               345900: Read operand1 from reg# 8:    20
+#               346350: peek instruction 00000000000000000000110110010010
+#               346350: Read operand2 from reg#27: 51428
+#               346950: r instruction 00000001101101000000010010101001 of opcode  5
+#               347400: peek instruction 00000000000000000000010010010010
+#               347400: Read  5-opcode result from reg# 9: 51440
+# XOR
+#               348200: peek instruction 00000000000000000000000010010010
+#               348200: Read operand1 from reg# 1:    14
+#               348500: poke instruction 00000000000001000000110010001010
+#               348500: Write imm     4 to reg #25
+#               348950: peek instruction 00000000000000000000110010010010
+#               348950: Read operand2 from reg#25:     4
+#               349550: r instruction 00000001100100001000001111000001 of opcode  8
+#               350000: peek instruction 00000000000000000000001110010010
+#               350000: Read  8-opcode result from reg# 7:     0
+# SRL
+#               351150: peek instruction 00000000000000000000010000010010
+#               351150: Read operand1 from reg# 8:    20
+#               351600: peek instruction 00000000000000000000110110010010
+#               351600: Read operand2 from reg#27: 51428
+#               352200: r instruction 00000001101101000000010100001001 of opcode  1
+#               352650: peek instruction 00000000000000000000010100010010
+#               352650: Read  1-opcode result from reg#10: 51448
+# ADD
+#               353450: peek instruction 00000000000000000000100110010010
+#               353450: Read operand1 from reg#19:    16
+#               353750: poke instruction 00000000000001110000011100001010
+#               353750: Write imm     7 to reg #14
+#               354200: peek instruction 00000000000000000000011100010010
+#               354200: Read operand2 from reg#14:     7
+#               354800: r instruction 00000000111010011000100011001001 of opcode  9
+#               355250: peek instruction 00000000000000000000100010010010
+#               355250: Read  9-opcode result from reg#17:     0
+# SRA
+#               356400: peek instruction 00000000000000000000111110010010
+#               356400: Read operand1 from reg#31: 51412
+#               356850: peek instruction 00000000000000000000001010010010
+#               356850: Read operand2 from reg# 5:    10
+#               357450: r instruction 00000000010111111000101010101001 of opcode  5
+#               357900: peek instruction 00000000000000000000101010010010
+#               357900: Read  5-opcode result from reg#21: 51422
+# XOR
+#               358700: peek instruction 00000000000000000000100000010010
+#               358700: Read operand1 from reg#16:    30
+#               359000: poke instruction 00000000000011110000100110001010
+#               359000: Write imm    15 to reg #19
+#               359450: peek instruction 00000000000000000000100110010010
+#               359450: Read operand2 from reg#19:    15
+#               360050: r instruction 00000001001110000000101011000001 of opcode  8
+#               360500: peek instruction 00000000000000000000101010010010
+#               360500: Read  8-opcode result from reg#21:     0
+# SRL
+#               361650: peek instruction 00000000000000000000010110010010
+#               361650: Read operand1 from reg#11: 10240
+#               362100: peek instruction 00000000000000000000100100010010
+#               362100: Read operand2 from reg#18:   112
+#               362700: r instruction 00000001001001011000001010101001 of opcode  5
+#               363150: peek instruction 00000000000000000000001010010010
+#               363150: Read  5-opcode result from reg# 5: 10352
+# XOR
+#               363950: peek instruction 00000000000000000000010100010010
+#               363950: Read operand1 from reg#10: 51448
+#               364250: poke instruction 00000000000010110000000010001010
+#               364250: Write imm    11 to reg # 1
+#               364700: peek instruction 00000000000000000000000010010010
+#               364700: Read operand2 from reg# 1:    11
+#               365300: r instruction 00000000000101010000001000111001 of opcode  7
+#               365750: peek instruction 00000000000000000000001000010010
+#               365750: Read  7-opcode result from reg# 4: 49152
+# SLL
+#               366900: peek instruction 00000000000000000000000100010010
+#               366900: Read operand1 from reg# 2: 65535
+#               367350: peek instruction 00000000000000000000111110010010
+#               367350: Read operand2 from reg#31: 51412
+#               367950: r instruction 00000001111100010000101010001001 of opcode  1
+#               368400: peek instruction 00000000000000000000101010010010
+#               368400: Read  1-opcode result from reg#21: 51411
+# ADD
+#               369200: peek instruction 00000000000000000000100000010010
+#               369200: Read operand1 from reg#16:    30
+#               369500: poke instruction 00000000000010010000100110001010
+#               369500: Write imm     9 to reg #19
+#               369950: peek instruction 00000000000000000000100110010010
+#               369950: Read operand2 from reg#19:     9
+#               370550: r instruction 00000001001110000000110000111001 of opcode  7
+#               371000: peek instruction 00000000000000000000110000010010
+#               371000: Read  7-opcode result from reg#24: 15360
+# SLL
+#               372150: peek instruction 00000000000000000000101100010010
+#               372150: Read operand1 from reg#22:     2
+#               372600: peek instruction 00000000000000000000100110010010
+#               372600: Read operand2 from reg#19:     9
+#               373200: r instruction 00000001001110110000100110001001 of opcode  1
+#               373650: peek instruction 00000000000000000000100110010010
+#               373650: Read  1-opcode result from reg#19:    11
+# ADD
+#               374450: peek instruction 00000000000000000000100010010010
+#               374450: Read operand1 from reg#17:     0
+#               374750: poke instruction 00000000000001100000100010001010
+#               374750: Write imm     6 to reg #17
+#               375200: peek instruction 00000000000000000000100010010010
+#               375200: Read operand2 from reg#17:     6
+#               375800: r instruction 00000001000110001000101100111001 of opcode  7
+#               376250: peek instruction 00000000000000000000101100010010
+#               376250: Read  7-opcode result from reg#22:   384
+# SLL
+# ALU result mismatch!!
+#               377400: peek instruction 00000000000000000000010010010010
+#               377400: Read operand1 from reg# 9: 51440
+#               377850: peek instruction 00000000000000000000100010010010
+#               377850: Read operand2 from reg#17:     6
+#               378450: r instruction 00000001000101001000000110001001 of opcode  1
+#               378900: peek instruction 00000000000000000000000110010010
+#               378900: Read  1-opcode result from reg# 3: 51446
+# ADD
+#               379700: peek instruction 00000000000000000000010010010010
+#               379700: Read operand1 from reg# 9: 51440
+#               380000: poke instruction 00000000000001010000001100001010
+#               380000: Write imm     5 to reg # 6
+#               380450: peek instruction 00000000000000000000001100010010
+#               380450: Read operand2 from reg# 6:     5
+#               381050: r instruction 00000000011001001000111101000001 of opcode  8
+#               381500: peek instruction 00000000000000000000111100010010
+#               381500: Read  8-opcode result from reg#30:  1607
+# SRL
+#               382650: peek instruction 00000000000000000000101100010010
+#               382650: Read operand1 from reg#22:   384
+#               383100: peek instruction 00000000000000000000010010010010
+#               383100: Read operand2 from reg# 9: 51440
+#               383700: r instruction 00000000100110110000000010100001 of opcode  4
+#               384150: peek instruction 00000000000000000000000010010010
+#               384150: Read  4-opcode result from reg# 1: 51696
+# OR
+#               384950: peek instruction 00000000000000000000000010010010
+#               384950: Read operand1 from reg# 1: 51696
+#               385250: poke instruction 00000000000010010000010110001010
+#               385250: Write imm     9 to reg #11
+#               385700: peek instruction 00000000000000000000010110010010
+#               385700: Read operand2 from reg#11:     9
+#               386300: r instruction 00000000101100001000011001010001 of opcode 10
+#               386750: peek instruction 00000000000000000000011000010010
+#               386750: Read 10-opcode result from reg#12: 57747
+# ROL
+#               387900: peek instruction 00000000000000000000000100010010
+#               387900: Read operand1 from reg# 2: 65535
+#               388350: peek instruction 00000000000000000000111010010010
+#               388350: Read operand2 from reg#29:    14
+#               388950: r instruction 00000001110100010000011110100001 of opcode  4
+#               389400: peek instruction 00000000000000000000011110010010
+#               389400: Read  4-opcode result from reg#15: 65535
+# OR
+#               390200: peek instruction 00000000000000000000100100010010
+#               390200: Read operand1 from reg#18:   112
+#               390500: poke instruction 00000000000010100000001110001010
+#               390500: Write imm    10 to reg # 7
+#               390950: peek instruction 00000000000000000000001110010010
+#               390950: Read operand2 from reg# 7:    10
+#               391550: r instruction 00000000011110010000001101010001 of opcode 10
+#               392000: peek instruction 00000000000000000000001100010010
+#               392000: Read 10-opcode result from reg# 6: 49153
+# ROL
+#               393150: peek instruction 00000000000000000000011110010010
+#               393150: Read operand1 from reg#15: 65535
+#               393600: peek instruction 00000000000000000000000010010010
+#               393600: Read operand2 from reg# 1: 51696
+#               394200: r instruction 00000000000101111000000000100001 of opcode  4
+#               394650: peek instruction 00000000000000000000000000010010
+#               394650: Read  4-opcode result from reg# 0:     0
+# OR
+# ALU result mismatch!!
+#               395450: peek instruction 00000000000000000000011100010010
+#               395450: Read operand1 from reg#14:     7
+#               395750: poke instruction 00000000000001100000101010001010
+#               395750: Write imm     6 to reg #21
+#               396200: peek instruction 00000000000000000000101010010010
+#               396200: Read operand2 from reg#21:     6
+#               396800: r instruction 00000001010101110000000100111001 of opcode  7
+#               397250: peek instruction 00000000000000000000000100010010
+#               397250: Read  7-opcode result from reg# 2:   448
+# SLL
+#               398400: peek instruction 00000000000000000000110010010010
+#               398400: Read operand1 from reg#25:     4
+#               398850: peek instruction 00000000000000000000111000010010
+#               398850: Read operand2 from reg#28:     7
+#               399450: r instruction 00000001110011001000110110011001 of opcode  3
+#               399900: peek instruction 00000000000000000000110110010010
+#               399900: Read  3-opcode result from reg#27:     4
+# AND
+#               400700: peek instruction 00000000000000000000010100010010
+#               400700: Read operand1 from reg#10: 51448
+#               401000: poke instruction 00000000000011000000100110001010
+#               401000: Write imm    12 to reg #19
+#               401450: peek instruction 00000000000000000000100110010010
+#               401450: Read operand2 from reg#19:    12
+#               402050: r instruction 00000001001101010000101001010001 of opcode 10
+#               402500: peek instruction 00000000000000000000101000010010
+#               402500: Read 10-opcode result from reg#20: 35983
+# ROL
+#               403650: peek instruction 00000000000000000000101010010010
+#               403650: Read operand1 from reg#21:     6
+#               404100: peek instruction 00000000000000000000101010010010
+#               404100: Read operand2 from reg#21:     6
+#               404700: r instruction 00000001010110101000101000011001 of opcode  3
+#               405150: peek instruction 00000000000000000000101000010010
+#               405150: Read  3-opcode result from reg#20:     6
+# AND
+#               405950: peek instruction 00000000000000000000111110010010
+#               405950: Read operand1 from reg#31: 51412
+#               406250: poke instruction 00000000000010010000100000001010
+#               406250: Write imm     9 to reg #16
+#               406700: peek instruction 00000000000000000000100000010010
+#               406700: Read operand2 from reg#16:     9
+#               407300: r instruction 00000001000011111000100111010001 of opcode 10
+#               407750: peek instruction 00000000000000000000100110010010
+#               407750: Read 10-opcode result from reg#19: 43409
+# ROL
+#               408900: peek instruction 00000000000000000000000100010010
+#               408900: Read operand1 from reg# 2:   448
+#               409350: peek instruction 00000000000000000000001110010010
+#               409350: Read operand2 from reg# 7:    10
+#               409950: r instruction 00000000011100010000001110011001 of opcode  3
+#               410400: peek instruction 00000000000000000000001110010010
+#               410400: Read  3-opcode result from reg# 7:     0
+# AND
+#               411200: peek instruction 00000000000000000000100110010010
+#               411200: Read operand1 from reg#19: 43409
+#               411500: poke instruction 00000000000000010000011110001010
+#               411500: Write imm     1 to reg #15
+#               411950: peek instruction 00000000000000000000011110010010
+#               411950: Read operand2 from reg#15:     1
+#               412550: r instruction 00000000111110011000000000111001 of opcode  7
+#               413000: peek instruction 00000000000000000000000000010010
+#               413000: Read  7-opcode result from reg# 0:     0
+# SLL
+# ALU result mismatch!!
+#               414150: peek instruction 00000000000000000000001010010010
+#               414150: Read operand1 from reg# 5: 10352
+#               414600: peek instruction 00000000000000000000100100010010
+#               414600: Read operand2 from reg#18:   112
+#               415200: r instruction 00000001001000101000111010001001 of opcode  1
+#               415650: peek instruction 00000000000000000000111010010010
+#               415650: Read  1-opcode result from reg#29: 10464
+# ADD
+#               416450: peek instruction 00000000000000000000110100010010
+#               416450: Read operand1 from reg#26: 37833
+#               416750: poke instruction 00000000000000100000111000001010
+#               416750: Write imm     2 to reg #28
+#               417200: peek instruction 00000000000000000000111000010010
+#               417200: Read operand2 from reg#28:     2
+#               417800: r instruction 00000001110011010000011011000001 of opcode  8
+#               418250: peek instruction 00000000000000000000011010010010
+#               418250: Read  8-opcode result from reg#13:  9458
+# SRL
+#               419400: peek instruction 00000000000000000000011110010010
+#               419400: Read operand1 from reg#15:     1
+#               419850: peek instruction 00000000000000000000110100010010
+#               419850: Read operand2 from reg#26: 37833
+#               420450: r instruction 00000001101001111000011010011001 of opcode  3
+#               420900: peek instruction 00000000000000000000011010010010
+#               420900: Read  3-opcode result from reg#13:     1
+# AND
+#               421700: peek instruction 00000000000000000000100100010010
+#               421700: Read operand1 from reg#18:   112
+#               422000: poke instruction 00000000000001100000001100001010
+#               422000: Write imm     6 to reg # 6
+#               422450: peek instruction 00000000000000000000001100010010
+#               422450: Read operand2 from reg# 6:     6
+#               423050: r instruction 00000000011010010000011001001001 of opcode  9
+#               423500: peek instruction 00000000000000000000011000010010
+#               423500: Read  9-opcode result from reg#12:     1
+# SRA
+#               424650: peek instruction 00000000000000000000110100010010
+#               424650: Read operand1 from reg#26: 37833
+#               425100: peek instruction 00000000000000000000110100010010
+#               425100: Read operand2 from reg#26: 37833
+#               425700: r instruction 00000001101011010000001100001001 of opcode  1
+#               426150: peek instruction 00000000000000000000001100010010
+#               426150: Read  1-opcode result from reg# 6: 10130
+# ADD
+#               426950: peek instruction 00000000000000000000110100010010
+#               426950: Read operand1 from reg#26: 37833
+#               427250: poke instruction 00000000000000110000011100001010
+#               427250: Write imm     3 to reg #14
+#               427700: peek instruction 00000000000000000000011100010010
+#               427700: Read operand2 from reg#14:     3
+#               428300: r instruction 00000000111011010000011100111001 of opcode  7
+#               428750: peek instruction 00000000000000000000011100010010
+#               428750: Read  7-opcode result from reg#14: 40520
+# SLL
+#               429900: peek instruction 00000000000000000000110000010010
+#               429900: Read operand1 from reg#24: 15360
+#               430350: peek instruction 00000000000000000000101010010010
+#               430350: Read operand2 from reg#21:     6
+#               430950: r instruction 00000001010111000000101100011001 of opcode  3
+#               431400: peek instruction 00000000000000000000101100010010
+#               431400: Read  3-opcode result from reg#22:     0
+# AND
+#               432200: peek instruction 00000000000000000000010000010010
+#               432200: Read operand1 from reg# 8:    20
+#               432500: poke instruction 00000000000010100000111010001010
+#               432500: Write imm    10 to reg #29
+#               432950: peek instruction 00000000000000000000111010010010
+#               432950: Read operand2 from reg#29:    10
+#               433550: r instruction 00000001110101000000111111001001 of opcode  9
+#               434000: peek instruction 00000000000000000000111110010010
+#               434000: Read  9-opcode result from reg#31:     0
+# SRA
+#               435150: peek instruction 00000000000000000000101010010010
+#               435150: Read operand1 from reg#21:     6
+#               435600: peek instruction 00000000000000000000001000010010
+#               435600: Read operand2 from reg# 4: 49152
+#               436200: r instruction 00000000010010101000101110101001 of opcode  5
+#               436650: peek instruction 00000000000000000000101110010010
+#               436650: Read  5-opcode result from reg#23: 49158
+# XOR
+#               437450: peek instruction 00000000000000000000100000010010
+#               437450: Read operand1 from reg#16:     9
+#               437750: poke instruction 00000000000100000000100010001010
+#               437750: Write imm    16 to reg #17
+#               438200: peek instruction 00000000000000000000100010010010
+#               438200: Read operand2 from reg#17:    16
+#               438800: r instruction 00000001000110000000111001001001 of opcode  9
+#               439250: peek instruction 00000000000000000000111000010010
+#               439250: Read  9-opcode result from reg#28:     0
+# SRA
+#               440400: peek instruction 00000000000000000000010010010010
+#               440400: Read operand1 from reg# 9: 51440
+#               440850: peek instruction 00000000000000000000000010010010
+#               440850: Read operand2 from reg# 1: 51696
+#               441450: r instruction 00000000000101001000101100011001 of opcode  3
+#               441900: peek instruction 00000000000000000000101100010010
+#               441900: Read  3-opcode result from reg#22: 51440
+# AND
+#               442700: peek instruction 00000000000000000000111000010010
+#               442700: Read operand1 from reg#28:     0
+#               443000: poke instruction 00000000000011000000000000001010
+#               443000: Write imm    12 to reg # 0
+#               443450: peek instruction 00000000000000000000000000010010
+#               443450: Read operand2 from reg# 0:     0
+#               444050: r instruction 00000000000011100000011010111001 of opcode  7
+#               444500: peek instruction 00000000000000000000011010010010
+#               444500: Read  7-opcode result from reg#13:     0
+# SLL
+#               445650: peek instruction 00000000000000000000001110010010
+#               445650: Read operand1 from reg# 7:     0
+#               446100: peek instruction 00000000000000000000010100010010
+#               446100: Read operand2 from reg#10: 51448
+#               446700: r instruction 00000000101000111000101010011001 of opcode  3
+#               447150: peek instruction 00000000000000000000101010010010
+#               447150: Read  3-opcode result from reg#21:     0
+# AND
+#               447950: peek instruction 00000000000000000000111100010010
+#               447950: Read operand1 from reg#30:  1607
+#               448250: poke instruction 00000000000100000000000010001010
+#               448250: Write imm    16 to reg # 1
+#               448700: peek instruction 00000000000000000000000010010010
+#               448700: Read operand2 from reg# 1:    16
+#               449300: r instruction 00000000000111110000011110111001 of opcode  7
+#               449750: peek instruction 00000000000000000000011110010010
+#               449750: Read  7-opcode result from reg#15:     0
+# SLL
+# ** Note: $finish    : C:/Users/SSWYBD/Desktop/cod24-li-zs20/thinpad_top.srcs/sim_1/new/tb/lab3_tb.sv(366)
+#    Time: 454450 ns  Iteration: 0  Instance: /lab3_tb
+# 1
+# Break in Module lab3_tb at C:/Users/SSWYBD/Desktop/cod24-li-zs20/thinpad_top.srcs/sim_1/new/tb/lab3_tb.sv line 366
+
+

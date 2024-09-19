@@ -8,12 +8,9 @@ module lab3_tb;
   reg push_btn;   // BTN5 按钮开关，带消抖电路，按下时为 1
   reg reset_btn;  // BTN6 复位按钮，带消抖电路，按下时为 1
 
-  reg [3:0] touch_btn; // BTN1~BTN4，按钮开关，按下时为 1
   reg [31:0] dip_sw;   // 32 位拨码开关，拨到“ON”时为 1
 
   wire [15:0] leds;  // 16 位 LED，输出时 1 点亮
-  wire [7:0] dpy0;   // 数码管低位信号，包括小数点，输出 1 点亮
-  wire [7:0] dpy1;   // 数码管高位信号，包括小数点，输出 1 点亮
 
   // lab3 用到的指令格式
   `define inst_rtype(rd, rs1, rs2, op) \
@@ -39,10 +36,31 @@ module lab3_tb;
     ROL = 4'b1010
   } opcode_t;
 
+  task get_op_name;
+    input [3:0] op;
+
+    case (op)
+      ADD: $display("ADD");
+      SUB: $display("SUB");
+      AND: $display("AND");
+      OR:  $display("OR");
+      XOR: $display("XOR");
+      NOT: $display("NOT");
+      SLL: $display("SLL");
+      SRL: $display("SRL");
+      SRA: $display("SRA");
+      ROL: $display("ROL");
+      default: $display("UNKNOWN");
+    endcase
+  endtask
+
   logic is_rtype, is_itype, is_load, is_store, is_unknown;
   logic [15:0] imm;
   logic [4:0] rd, rs1, rs2;
   logic [3:0] opcode;
+
+  logic [15:0] alu_a, alu_b, alu_y;  // temp storage of operands and result
+  logic signed [15:0] tmp_alu_y;
 
   // [1, 6]  ops as one group
   // [7, 10] ops as another group, because they're shifts and operand B can't be too big
@@ -59,7 +77,9 @@ module lab3_tb;
     #100;
     push_btn = 0;
     #350;
-    $display("%d: Read operand1: %d", $time, leds);
+    $display("%d: peek instruction %b", $time, dip_sw);
+    $display("%d: Read operand1 from reg#%d: %d", $time, rs1, leds);
+    alu_a = leds;
 
     if (low >= 4'd7) begin
       imm = $urandom_range(0, 16);  // shift at most 16 bits
@@ -68,11 +88,13 @@ module lab3_tb;
       #100;
       push_btn = 0;
       #200;
+      $display("%d: poke instruction %b", $time, dip_sw);
+      $display("%d: Write imm %d to reg #%d", $time, imm, rs2);
 
       dip_sw = `inst_peek(rs2, 16'd0);
       push_btn = 1;
       #100;
-      push_btn = 0;      
+      push_btn = 0;
     end 
     else begin
       dip_sw = `inst_peek(rs2, 16'd0);
@@ -80,9 +102,11 @@ module lab3_tb;
       #100;
       push_btn = 0;
     end
-    #350;
     
-    $display("%d: Read operand2: %d", $time, leds);
+    #350;
+    $display("%d: peek instruction %b", $time, dip_sw);
+    $display("%d: Read operand2 from reg#%d: %d", $time, rs2, leds);
+    alu_b = leds;
 
     opcode = $urandom_range(low, high);
 
@@ -91,6 +115,7 @@ module lab3_tb;
     #100;
     push_btn = 0;
     #500;
+    $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
 
     // check destination operand
     dip_sw = `inst_peek(rd, 16'd0);
@@ -98,13 +123,193 @@ module lab3_tb;
     #100;
     push_btn = 0;
     #350;
-    $display("%d: Read %d-opcode result: %d", $time, opcode, leds);
+    $display("%d: peek instruction %b", $time, dip_sw);
+    $display("%d: Read %d-opcode result from reg#%d: %d", $time, opcode, rd, leds);
+    get_op_name(opcode);
+
+    case (opcode)
+      ADD: begin
+        alu_y = alu_a + alu_b;
+      end
+      SUB: begin
+        alu_y = alu_a - alu_b;
+      end
+      AND: begin
+        alu_y = alu_a & alu_b;
+      end
+      OR: begin
+        alu_y = alu_a | alu_b;
+      end
+      XOR: begin
+        alu_y = alu_a ^ alu_b;
+      end
+      NOT: begin
+        alu_y = ~alu_a;
+      end
+      SLL: begin
+        alu_y = alu_a << alu_b;
+      end
+      SRL: begin
+        alu_y = alu_a >> alu_b;
+      end
+      SRA: begin
+        tmp_alu_y = $signed(alu_a) >>> alu_b;
+        alu_y = tmp_alu_y;
+      end
+      ROL: begin
+        alu_y = (alu_a << alu_b) | (alu_a >> (16'd16 - alu_b));
+      end
+    endcase
+    assert(alu_y == leds) else $display("ALU result mismatch!!");
+  endtask
+
+  // for actual input of the board
+  task small_test;
+    // only use reg 1, 2, 3; 4 is for shift operandB
+    for (int i = 0; i < 5; i = i + 1) begin
+      #100;
+      rd = i;
+      if (i == 4) begin
+        imm = $urandom_range(2, 9);
+      end
+      else begin
+        imm = $urandom_range(0, 65535);
+      end
+      dip_sw = `inst_poke(rd, imm);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+
+      $display("%d: poke instruction %b", $time, dip_sw);
+      $display("%d: Write imm %d to reg #%d", $time, imm, i);
+
+      #800;
+    end
+    #1200;
+
+    // check 0, 1, 2, 3, 4, 5 (5 should be zero)
+    for (int i = 0; i < 6; i = i + 1) begin
+      #100;
+      rd = i;
+      dip_sw = `inst_peek(rd, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+      #350;
+
+      $display("%d: peek instruction %b", $time, dip_sw);
+      $display("%d: Read reg #%d: %d", $time, i, leds);
+
+      #800;
+    end
+    #1200;
+
+    // add #1 and #2, store to #3
+    rd = 5'd3;
+    rs1 = 5'd1;
+    rs2 = 5'd2;
+    opcode = ADD;
+
+    while (opcode < SLL) begin
+      dip_sw = `inst_rtype(rd, rs1, rs2, opcode);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+      #500;
+      $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
+
+      dip_sw = `inst_peek(rd, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+
+      #350;
+      $display("%d: peek instruction %b", $time, dip_sw);
+      $display("%d: Read %d-opcode result from reg#%d: %d", $time, opcode, rd, leds);
+      get_op_name(opcode);
+
+      opcode = opcode + 1;    
+    end
+
+    // shift #1 by #4, store to #3
+    rd = 5'd3;
+    rs1 = 5'd1;
+    rs2 = 5'd4;
+
+    while (opcode <= ROL) begin
+      dip_sw = `inst_rtype(rd, rs1, rs2, opcode);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+      #500;
+      $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
+
+      dip_sw = `inst_peek(rd, 16'd0);
+      push_btn = 1;
+      #100;
+      push_btn = 0;
+
+      #350;
+      $display("%d: peek instruction %b", $time, dip_sw);
+      $display("%d: Read %d-opcode result from reg#%d: %d", $time, opcode, rd, leds);
+      get_op_name(opcode);
+
+      opcode = opcode + 1;    
+    end
+
+    $display("%d: two more!", $time);
+    // srl shift x2 by x4, store to x3
+    rd = 5'd3;
+    rs1 = 5'd2;
+    rs2 = 5'd4;
+    opcode = SRL;
+
+    dip_sw = `inst_rtype(rd, rs1, rs2, opcode);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    #500;
+    $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
+
+    dip_sw = `inst_peek(rd, 16'd0);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+
+    #350;
+    $display("%d: peek instruction %b", $time, dip_sw);
+    $display("%d: Read %d-opcode result from reg#%d: %d", $time, opcode, rd, leds);
+    get_op_name(opcode);
+
+    // sra shift x2 by x4, store to x3
+    rd = 5'd3;
+    rs1 = 5'd2;
+    rs2 = 5'd4;
+    opcode = SRA;
+
+    dip_sw = `inst_rtype(rd, rs1, rs2, opcode);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+    #500;
+    $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
+
+    dip_sw = `inst_peek(rd, 16'd0);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+
+    #350;
+    $display("%d: peek instruction %b", $time, dip_sw);
+    $display("%d: Read %d-opcode result from reg#%d: %d", $time, opcode, rd, leds);
+    get_op_name(opcode);
+
+    $display("%d: Finished small test case!!", $time);
   endtask
 
   initial begin
     // 在这里可以自定义测试输入序列，例如：
     dip_sw = 32'h0;
-    touch_btn = 0;
     reset_btn = 0;
     push_btn = 0;
 
@@ -113,6 +318,8 @@ module lab3_tb;
     #100;
     reset_btn = 0;
     #`WAIT_FOR_PLL_LOCKED;
+
+    small_test();
 
     // 样例：使用 POKE 指令为寄存器赋随机初值
     for (int i = 0; i < 32; i = i + 1) begin
@@ -124,6 +331,7 @@ module lab3_tb;
       #100;
       push_btn = 0;
 
+      $display("%d: poke instruction %b", $time, dip_sw);
       $display("%d: Write imm %d to reg #%d", $time, imm, i);
 
       #800;
@@ -140,6 +348,7 @@ module lab3_tb;
       push_btn = 0;
       #350;
 
+      $display("%d: peek instruction %b", $time, dip_sw);
       $display("%d: Read reg #%d: %d", $time, i, leds);
 
       #800;
@@ -154,7 +363,7 @@ module lab3_tb;
       #700;
     end
     
-    #10000 $finish;
+    #4000 $finish;
   end
 
   // 待测试用户设计
@@ -163,11 +372,11 @@ module lab3_tb;
       .clk_11M0592(clk_11M0592),
       .push_btn(push_btn),
       .reset_btn(reset_btn),
-      .touch_btn(touch_btn),
+      .touch_btn(),
       .dip_sw(dip_sw),
       .leds(leds),
-      .dpy1(dpy1),
-      .dpy0(dpy0),
+      .dpy1(),
+      .dpy0(),
 
       .txd(),
       .rxd(1'b1),

@@ -74,7 +74,7 @@ always_ff @(posedge clk) begin
                 if (is_rtype) begin
                     rf_raddr_a <= rs1;
                     rf_raddr_b <= rs2;
-                    rf_waddr <= rd;
+                    rf_waddr   <= rd;
                     state      <= CALC_STATE;
                 end
                 else if (is_peek) begin
@@ -91,16 +91,17 @@ always_ff @(posedge clk) begin
             end
 
             CALC_STATE: begin
-                alu_a <= rf_rdata_a;
-                alu_b <= rf_rdata_b;
+                alu_a  <= rf_rdata_a;
+                alu_b  <= rf_rdata_b;
                 alu_op <= opcode;
-                state <= WRITE_REG_STATE;
+                state  <= WRITE_REG_STATE;
             end
 
             WRITE_REG_STATE: begin
                 rf_we <= 1'b1;
                 if (is_rtype) begin
-                    rf_wdata <= alu_y;  // `alu_y` has already been calculated, so no rw confict if at the same reg addr
+                    rf_wdata <= alu_y;
+                    // `alu_y` has already been calculated, so no rw confict if at the same reg addr
                 end
                 else begin
                     rf_wdata <= imm;
