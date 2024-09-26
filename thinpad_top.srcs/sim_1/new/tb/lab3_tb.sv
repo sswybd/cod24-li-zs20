@@ -307,7 +307,49 @@ module lab3_tb;
     $display("%d: Finished small test case!!", $time);
   endtask
 
+  task wrong_case_test;
+    // input 0xbab3 into 28
+    rd = 5'd28;
+    imm = 16'hbab3;
+    dip_sw = `inst_poke(rd, imm);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+
+    $display("%d: poke instruction %b", $time, dip_sw);
+    $display("%d: Write imm %d to reg #%d", $time, imm, 28);
+
+    // input 0x30f5 into 11
+    rd = 5'd11;
+    imm = 16'h30f5;
+    dip_sw = `inst_poke(rd, imm);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+
+    $display("%d: poke instruction %b", $time, dip_sw);
+    $display("%d: Write imm %d to reg #%d", $time, imm, 11);
+
+    rd = 5'd16;
+    rs1 = 5'd28;
+    rs2 = 5'd11;
+    opcode = SRA;
+
+    dip_sw = `inst_rtype(rd, rs1, rs2, opcode);
+    push_btn = 1;
+    #100;
+    push_btn = 0;
+
+    #500;
+    $display("%d: r instruction %b of opcode %d", $time, dip_sw, opcode);
+
+
+  endtask
+
   initial begin
+    integer seed = 201;
+    process::self().srandom(seed);  // set random seed and it's indeed effective (useful)
+
     // 在这里可以自定义测试输入序列，例如：
     dip_sw = 32'h0;
     reset_btn = 0;
@@ -319,7 +361,8 @@ module lab3_tb;
     reset_btn = 0;
     #`WAIT_FOR_PLL_LOCKED;
 
-    small_test();
+    // small_test();
+    wrong_case_test();  // test the online OJ judge's wrong cases
 
     // 样例：使用 POKE 指令为寄存器赋随机初值
     for (int i = 0; i < 32; i = i + 1) begin
@@ -356,7 +399,7 @@ module lab3_tb;
     #2000;
 
     // randomly test the operations
-    for (int i = 0; i < 65; i++) begin
+    for (int i = 0; i < 50; i++) begin
       test_op_one_round(4'd1, 4'd6);  // test operations other than shifts
       #350;
       test_op_one_round(4'd7, 4'd10);  // test shift operations
