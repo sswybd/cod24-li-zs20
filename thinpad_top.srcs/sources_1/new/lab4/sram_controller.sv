@@ -37,7 +37,7 @@ assign sram_be_n = ~wb_sel_i;
 // The case like accessing 0x5's four bytes is not handled yet, but I don't think this handling is needed.
 // But accessing 0x5's one byte is handled correctly, because `wb_sel_i` is correctly set as 4'b0010.
 
-assign sram_oe_n = wbm_we_i;
+assign sram_oe_n = wb_we_i;
 
 wire sram_ce_i;  // internal signal for convenience
 assign sram_ce_i = wb_cyc_i & wb_stb_i;
