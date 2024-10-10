@@ -134,7 +134,6 @@ module lab5_top (
       .rst_i(sys_rst),
       .addr_i(dip_sw),
       
-
       // wishbone master
       .wb_cyc_o(wbm_cyc_o),
       .wb_stb_o(wbm_stb_o),
