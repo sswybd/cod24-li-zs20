@@ -73,7 +73,7 @@ always_ff @(posedge clk_i) begin
     if (rst_i) begin
         uart_state_dat_reg <= 'd0;
         dat_reg <= 'd0;
-        wr_cnt <= 5'd0;
+        wr_cnt <= 32'd0;
         dat_o <= 'd0;
         wb_we_o <= 1'd0;
         wb_sel_o <= 4'b0000;
@@ -128,10 +128,10 @@ always_ff @(posedge clk_i) begin
                     wb_stb_o <= 1'd0;
                 end
                 wb_sel_o <= 4'b0001;
-                wb_adr_o <= sram_addr_saved + wr_cnt << 2;  // + wr_cnt * 4
+                wb_adr_o <= sram_addr_saved + (wr_cnt << 2);  // + wr_cnt * 4
             end
             WR_SRAM_DONE: begin
-                wr_cnt <= wr_cnt + 5'd1;
+                wr_cnt <= wr_cnt + 32'd1;
                 wb_sel_o <= 4'b0010;
                 wb_adr_o <= UART_STATE_ADDR;
                 wb_cyc_o <= 1'd1;
