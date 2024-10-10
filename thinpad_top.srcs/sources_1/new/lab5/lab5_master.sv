@@ -97,7 +97,7 @@ always_ff @(posedge clk_i) begin
                 end
             end
             RD_WAIT_CHK: begin
-                if (uart_state_dat_reg == UART_READ_READY) begin
+                if (uart_state_dat_reg[8]) begin
                     wb_sel_o <= 4'b0001;
                     wb_adr_o <= UART_DATA_ADDR;
                 end
@@ -145,7 +145,7 @@ always_ff @(posedge clk_i) begin
                 end
             end
             WR_WAIT_CHK: begin
-                if (uart_state_dat_reg == UART_WRITE_READY) begin
+                if (uart_state_dat_reg[13]) begin
                     dat_o <= dat_reg;
                     wb_we_o <= 1'd1;
                     wb_sel_o <= 4'b0001;
@@ -191,7 +191,7 @@ always_comb begin
             end
         end
         RD_WAIT_CHK: begin
-            if (uart_state_dat_reg == UART_READ_READY) begin
+            if (uart_state_dat_reg[8]) begin
                 next_state = RD_DATA;
             end
             else begin
@@ -226,7 +226,7 @@ always_comb begin
             end
         end
         WR_WAIT_CHK: begin
-            if (uart_state_dat_reg == UART_WRITE_READY) begin
+            if (uart_state_dat_reg[13]) begin
                 next_state = WR_DATA;
             end
             else begin
