@@ -277,17 +277,13 @@ module lab4_top (
       .sram_be_n(base_ram_be_n)
   );
 
-  (* MARK_DEBUG = "TRUE" *) wire [31:0] base_ram_data_debug;
-  assign base_ram_data_debug = base_ram_data;
-
   ila_0 u_ila (
       .clk(sys_clk),
 
-      .probe0(base_ram_data_debug),
+      .probe0(wbs0_dat_o),
       .probe1(wbs0_cyc_o),
       .probe2(wbs0_we_o), 
-      .probe3(wbs0_ack_i), 
-      .probe4(wbs0_dat_o)
+      .probe3(wbs0_ack_i)
  );  
 
   sram_controller #(
