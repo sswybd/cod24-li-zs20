@@ -185,8 +185,8 @@ module lab4_top (
   logic wbs0_stb_o;
   (* MARK_DEBUG = "TRUE" *) logic wbs0_ack_i;
   logic [31:0] wbs0_adr_o;
-  (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs0_dat_o;
-  logic [31:0] wbs0_dat_i;
+  logic [31:0] wbs0_dat_o;
+  (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs0_dat_i;
   logic [3:0] wbs0_sel_o;
   (* MARK_DEBUG = "TRUE" *) logic wbs0_we_o;
 
@@ -280,7 +280,7 @@ module lab4_top (
   ila_0 u_ila (
       .clk(sys_clk),
 
-      .probe0(wbs0_dat_o),
+      .probe0(wbs0_dat_i),
       .probe1(wbs0_cyc_o),
       .probe2(wbs0_we_o), 
       .probe3(wbs0_ack_i)
