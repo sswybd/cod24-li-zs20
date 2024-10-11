@@ -181,14 +181,14 @@ module lab4_top (
 
   /* =========== Lab4 MUX begin =========== */
   // Wishbone MUX (Masters) => SRAM controllers
-  logic wbs0_cyc_o;
+  (* MARK_DEBUG = "TRUE" *) logic wbs0_cyc_o;
   logic wbs0_stb_o;
-  logic wbs0_ack_i;
+  (* MARK_DEBUG = "TRUE" *) logic wbs0_ack_i;
   logic [31:0] wbs0_adr_o;
-  logic [31:0] wbs0_dat_o;
+  (* MARK_DEBUG = "TRUE" *) logic [31:0] wbs0_dat_o;
   logic [31:0] wbs0_dat_i;
   logic [3:0] wbs0_sel_o;
-  logic wbs0_we_o;
+  (* MARK_DEBUG = "TRUE" *) logic wbs0_we_o;
 
   logic wbs1_cyc_o;
   logic wbs1_stb_o;
@@ -276,6 +276,19 @@ module lab4_top (
       .sram_we_n(base_ram_we_n),
       .sram_be_n(base_ram_be_n)
   );
+
+  (* MARK_DEBUG = "TRUE" *) wire [31:0] base_ram_data_debug;
+  assign base_ram_data_debug = base_ram_data;
+
+  ila_0 u_ila (
+      .clk(sys_clk),
+
+      .probe0(base_ram_data_debug),
+      .probe1(wbs0_cyc_o),
+      .probe2(wbs0_we_o), 
+      .probe3(wbs0_ack_i), 
+      .probe4(wbs0_dat_o)
+ );  
 
   sram_controller #(
       .SRAM_ADDR_WIDTH(20),
