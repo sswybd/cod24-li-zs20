@@ -106,7 +106,337 @@ wire sys_rst;
 assign sys_clk = clk_10M;
 assign sys_rst = reset_of_clk10M;
 
+// 本实验不使用 CPLD 串口，禁用防止总线冲突
+assign uart_rdn = 1'd1;
+assign uart_wrn = 1'd1;
 
+parameter START_PC = 32'h8000_0000;
+parameter ADDR_WIDTH = 32;
+parameter DATA_WIDTH = 32;
+parameter SELECT_WIDTH = (DATA_WIDTH / 8);
+
+wire data_mem_and_peripheral_ack;
+wire instruction_mem_ack;
+wire bus_is_busy;
+
+/* =========== Wishbone code begin =========== */
+
+// master0/1 <-> arbiter
+wire wbm0_stb_o;
+wire wbm1_stb_o;
+wire wbm0_ack_i;
+wire wbm1_ack_i;
+wire [ADDR_WIDTH-1:0] wbm0_addr_o;
+wire [ADDR_WIDTH-1:0] wbm1_addr_o;
+wire [DATA_WIDTH-1:0] wbm0_dat_o;
+wire [DATA_WIDTH-1:0] wbm1_dat_o;
+wire [DATA_WIDTH-1:0] wbm0_dat_i;
+wire [DATA_WIDTH-1:0] wbm1_dat_i;
+wire [SELECT_WIDTH-1:0] wbm0_sel_o;
+wire [SELECT_WIDTH-1:0] wbm1_sel_o;
+wire wbm0_we_o;
+wire wbm1_we_o;
+
+// arbiter <-> MUX
+wire wbs_stb_i;
+wire wbs_cyc_i;
+wire wbs_ack_o;
+wire [ADDR_WIDTH-1:0] wbs_addr_i;
+wire [DATA_WIDTH-1:0] wbs_dat_o;
+wire [DATA_WIDTH-1:0] wbs_dat_i;
+wire [SELECT_WIDTH-1:0] wbs_sel_i;
+wire wbs_we_i;
+
+// MUX <-> slave0
+wire [ADDR_WIDTH-1:0] wbs0_adr_i;
+wire [DATA_WIDTH-1:0] wbs0_dat_o;
+wire [DATA_WIDTH-1:0] wbs0_dat_i;
+wire wbs0_we_i;
+wire [SELECT_WIDTH-1:0] wbs0_sel_i;
+wire wbs0_stb_i;
+wire wbs0_ack_o;
+wire wbs0_cyc_i;
+
+// MUX <-> slave1
+wire [ADDR_WIDTH-1:0] wbs1_adr_i;
+wire [DATA_WIDTH-1:0] wbs1_dat_o;
+wire [DATA_WIDTH-1:0] wbs1_dat_i;
+wire wbs1_we_i;
+wire [SELECT_WIDTH-1:0] wbs1_sel_i;
+wire wbs1_stb_i;
+wire wbs1_ack_o;
+wire wbs1_cyc_i;
+
+// MUX <-> slave2
+wire [ADDR_WIDTH-1:0] wbs2_adr_i;
+wire [DATA_WIDTH-1:0] wbs2_dat_o;
+wire [DATA_WIDTH-1:0] wbs2_dat_i;
+wire wbs2_we_i;
+wire [SELECT_WIDTH-1:0] wbs2_sel_i;
+wire wbs2_stb_i;
+wire wbs2_ack_o;
+wire wbs2_cyc_i;
+
+
+// master0 => arbiter
+memory_controller_master instruction_memory_controller_master_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .addr_i(),
+    .bus_is_busy(bus_is_busy),
+    .wr_data_i({DATA_WIDTH{1'b0}}),
+    .bus_data_i(wbm0_dat_i),
+    .wb_sel_i(4'b1111),
+    .ack_i(wbm0_ack_i),
+    .rd_en(1'd1),
+    .wr_en(1'd0),
+    .ack_o(instruction_mem_ack),
+    .stb_o(wbm0_stb_o),
+    .rd_data_o(),
+    .bus_data_o(wbm0_dat_o),
+    .addr_o(wbm0_addr_o),
+    .wb_sel_o(wbm0_sel_o),
+    .we_o(wbm0_we_o)
+);
+
+// master1 (high priority) => arbiter
+memory_controller_master data_memory_and_peripheral_controller_master_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .addr_i(),
+    .bus_is_busy(bus_is_busy),
+    .wr_data_i(),
+    .bus_data_i(wbm1_dat_i),
+    .wb_sel_i(),
+    .ack_i(wbm1_ack_i),
+    .rd_en(),
+    .wr_en(),
+    .ack_o(data_mem_and_peripheral_ack),
+    .stb_o(wbm1_stb_o),
+    .rd_data_o(),
+    .bus_data_o(wbm1_dat_o),
+    .addr_o(wbm1_addr_o),
+    .wb_sel_o(wbm1_sel_o),
+    .we_o(wbm1_we_o)
+);
+
+// arbiter => MUX
+wb_arbiter_2 #(
+    .ARB_LSB_HIGH_PRIORITY(0)
+) arbiter_inst (
+    .clk(sys_clk),
+    .rst(sys_rst),
+
+    /*
+     * Wishbone master 0 input
+     */
+    .wbm0_adr_i(wbm0_addr_o),
+    .wbm0_dat_i(wbm0_dat_o),
+    .wbm0_dat_o(wbm0_dat_i),
+    .wbm0_we_i(wbm0_we_o),
+    .wbm0_sel_i(wbm0_sel_o),
+    .wbm0_stb_i(wbm0_stb_o),
+    .wbm0_ack_o(wbm0_ack_i),
+    .wbm0_err_o(),
+    .wbm0_rty_o(),
+    .wbm0_cyc_i(wbm0_stb_o),
+
+    /*
+     * Wishbone master 1 input
+     */
+    .wbm1_adr_i(wbm1_addr_o),
+    .wbm1_dat_i(wbm1_dat_o),
+    .wbm1_dat_o(wbm1_dat_i),
+    .wbm1_we_i(wbm1_we_o),
+    .wbm1_sel_i(wbm1_sel_o),
+    .wbm1_stb_i(wbm1_stb_o),
+    .wbm1_ack_o(wbm1_ack_i),
+    .wbm1_err_o(),
+    .wbm1_rty_o(),
+    .wbm1_cyc_i(wbm1_stb_o),
+
+    /*
+     * Wishbone slave output
+     */
+    .wbs_adr_o(wbs_addr_i),
+    .wbs_dat_i(wbs_dat_o),
+    .wbs_dat_o(wbs_dat_i),
+    .wbs_we_o(wbs_we_i),
+    .wbs_sel_o(wbs_sel_i),
+    .wbs_stb_o(wbs_stb_i),
+    .wbs_ack_i(wbs_ack_o),
+    .wbs_err_i('0),
+    .wbs_rty_i('0),
+    .wbs_cyc_o(wbs_cyc_i)
+);
+
+// MUX => slaves
+wb_mux_3 wb_mux (
+    .clk(sys_clk),
+    .rst(sys_rst),
+
+    // Master interface (to the arbiter)
+    .wbm_adr_i(wbs_addr_i),
+    .wbm_dat_i(wbs_dat_i),
+    .wbm_dat_o(wbs_dat_o),
+    .wbm_we_i (wbs_we_i),
+    .wbm_sel_i(wbs_sel_i),
+    .wbm_stb_i(wbs_stb_i),
+    .wbm_ack_o(wbs_ack_o),
+    .wbm_err_o(),
+    .wbm_rty_o(),
+    .wbm_cyc_i(wbs_cyc_i),
+
+    // Slave interface 0 (to BaseRAM controller)
+    // Address range: 0x8000_0000 ~ 0x803F_FFFF
+    .wbs0_addr    (32'h8000_0000),
+    .wbs0_addr_msk(32'hFFC0_0000),
+
+    .wbs0_adr_o(wbs0_adr_i),
+    .wbs0_dat_i(wbs0_dat_o),
+    .wbs0_dat_o(wbs0_dat_i),
+    .wbs0_we_o (wbs0_we_i),
+    .wbs0_sel_o(wbs0_sel_i),
+    .wbs0_stb_o(wbs0_stb_i),
+    .wbs0_ack_i(wbs0_ack_o),
+    .wbs0_err_i('0),
+    .wbs0_rty_i('0),
+    .wbs0_cyc_o(wbs0_cyc_i),
+
+    // Slave interface 1 (to ExtRAM controller)
+    // Address range: 0x8040_0000 ~ 0x807F_FFFF
+    .wbs1_addr    (32'h8040_0000),
+    .wbs1_addr_msk(32'hFFC0_0000),
+
+    .wbs1_adr_o(wbs1_adr_i),
+    .wbs1_dat_i(wbs1_dat_o),
+    .wbs1_dat_o(wbs1_dat_i),
+    .wbs1_we_o (wbs1_we_i),
+    .wbs1_sel_o(wbs1_sel_i),
+    .wbs1_stb_o(wbs1_stb_i),
+    .wbs1_ack_i(wbs1_ack_o),
+    .wbs1_err_i('0),
+    .wbs1_rty_i('0),
+    .wbs1_cyc_o(wbs1_cyc_i),
+
+    // Slave interface 2 (to UART controller)
+    // Address range: 0x1000_0000 ~ 0x1000_FFFF
+    .wbs2_addr    (32'h1000_0000),
+    .wbs2_addr_msk(32'hFFFF_0000),
+
+    .wbs2_adr_o(wbs2_adr_i),
+    .wbs2_dat_i(wbs2_dat_o),
+    .wbs2_dat_o(wbs2_dat_i),
+    .wbs2_we_o (wbs2_we_i),
+    .wbs2_sel_o(wbs2_sel_i),
+    .wbs2_stb_o(wbs2_stb_i),
+    .wbs2_ack_i(wbs2_ack_o),
+    .wbs2_err_i('0),
+    .wbs2_rty_i('0),
+    .wbs2_cyc_o(wbs2_cyc_i)
+  );
+
+
+/* =========== Slaves begin =========== */
+sram_controller #(
+    .SRAM_ADDR_WIDTH(20),
+    .SRAM_DATA_WIDTH(32)
+) sram_controller_base (
+    .clk_i(sys_clk),
+    .rst_i(sys_rst),
+
+    // Wishbone slave (to MUX)
+    .wb_cyc_i(wbs0_cyc_i),
+    .wb_stb_i(wbs0_stb_i),
+    .wb_ack_o(wbs0_ack_o),
+    .wb_adr_i(wbs0_adr_i),
+    .wb_dat_i(wbs0_dat_i),
+    .wb_dat_o(wbs0_dat_o),
+    .wb_sel_i(wbs0_sel_i),
+    .wb_we_i (wbs0_we_i),
+
+    // To SRAM chip
+    .sram_addr(base_ram_addr),
+    .sram_data(base_ram_data),
+    .sram_ce_n(base_ram_ce_n),
+    .sram_oe_n(base_ram_oe_n),
+    .sram_we_n(base_ram_we_n),
+    .sram_be_n(base_ram_be_n)
+);
+
+sram_controller #(
+    .SRAM_ADDR_WIDTH(20),
+    .SRAM_DATA_WIDTH(32)
+) sram_controller_ext (
+    .clk_i(sys_clk),
+    .rst_i(sys_rst),
+
+    // Wishbone slave (to MUX)
+    .wb_cyc_i(wbs1_cyc_i),
+    .wb_stb_i(wbs1_stb_i),
+    .wb_ack_o(wbs1_ack_o),
+    .wb_adr_i(wbs1_adr_i),
+    .wb_dat_i(wbs1_dat_i),
+    .wb_dat_o(wbs1_dat_o),
+    .wb_sel_i(wbs1_sel_i),
+    .wb_we_i (wbs1_we_i),
+
+    // To SRAM chip
+    .sram_addr(ext_ram_addr),
+    .sram_data(ext_ram_data),
+    .sram_ce_n(ext_ram_ce_n),
+    .sram_oe_n(ext_ram_oe_n),
+    .sram_we_n(ext_ram_we_n),
+    .sram_be_n(ext_ram_be_n)
+);
+
+uart_controller #(
+    .CLK_FREQ(10_000_000),
+    .BAUD    (115200)
+) uart_controller (
+    .clk_i(sys_clk),
+    .rst_i(sys_rst),
+
+    .wb_cyc_i(wbs2_cyc_i),
+    .wb_stb_i(wbs2_stb_i),
+    .wb_ack_o(wbs2_ack_o),
+    .wb_adr_i(wbs2_adr_i),
+    .wb_dat_i(wbs2_dat_i),
+    .wb_dat_o(wbs2_dat_o),
+    .wb_sel_i(wbs2_sel_i),
+    .wb_we_i (wbs2_we_i),
+
+    // to UART pins
+    .uart_txd_o(txd),
+    .uart_rxd_i(rxd)
+);
+
+/* =========== Slaves end =========== */
+
+/* =========== Wishbone code end =========== */
+
+hazard_detection_unit hazard_detection_unit_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .exe_stage_should_branch(),
+    .mem_stage_ack(data_mem_and_peripheral_ack),
+    .if_stage_ack(instruction_mem_ack),
+    .if_stage_using_bus(wbm0_stb_o),
+    .mem_stage_using_bus(wbm1_stb_o),
+    .mem_stage_request_use(),
+    .if_stage_invalid(),
+    .if_stage_into_bubble(),
+    .bus_is_busy(bus_is_busy),
+    .mem_stage_into_bubble(),
+    .exe_to_mem_wr_en(),
+    .id_to_exe_wr_en(),
+    .id_stage_into_bubble(),
+    .if_to_id_wr_en(),
+    .pc_wr_en()
+);
+
+
+endmodule
 
 /* =========== Demo code begin =========== */
 
@@ -199,5 +529,3 @@ assign sys_rst = reset_of_clk10M;
 //       .data_enable(video_de)
 //   );
   /* =========== Demo code end =========== */
-
-endmodule
