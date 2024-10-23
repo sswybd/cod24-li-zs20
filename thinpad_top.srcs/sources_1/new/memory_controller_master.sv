@@ -9,7 +9,7 @@ module memory_controller_master #(
     input wire bus_is_busy,
     input wire [DATA_WIDTH-1:0] wr_data_i,
     input wire [DATA_WIDTH-1:0] bus_data_i,
-    input wire [SELECT_WIDTH-1:0] wb_sel_i,
+    input wire [SELECT_WIDTH-1:0] sel_i,
     input wire ack_i,
     input wire rd_en,
     input wire wr_en,
@@ -22,5 +22,29 @@ module memory_controller_master #(
     output wire we_o
 );
 
+assign ack_o = ack_i;
+
+wire want_to_use;
+assign want_to_use = rd_en | wr_en;
+
+always_ff @(posedge sys_clk) begin
+    if (sys_rst) begin
+        stb_o <= 1'd0;
+    end
+    else begin
+        if (want_to_use && !bus_is_busy) begin
+            stb_o <= 1'd1;
+        end
+        else if (ack_i) begin
+            stb_o <= 1'd0;
+        end
+    end
+end
+
+assign rd_data_o = bus_data_i;
+assign bus_data_o = wr_data_i;
+assign addr_o = addr_i;
+assign wb_sel_o = sel_i;
+assign we_o = wr_en;
 
 endmodule
