@@ -80,7 +80,7 @@ module thinpad_top (
     output wire       video_de      // 行数据有效信号，用于区分消隐区
 );
 
-logic locked, clk_10M, clk_20M;
+wire locked, clk_10M, clk_20M;
 pll_example clock_gen (
     // Clock in ports
     .clk_in1(clk_50M),  // 外部时钟输入
@@ -113,8 +113,10 @@ assign uart_wrn = 1'd1;
 parameter START_PC = 32'h8000_0000;
 parameter ADDR_WIDTH = 32;
 parameter DATA_WIDTH = 32;
+parameter INSTR_WIDTH = 32;
 parameter SELECT_WIDTH = (DATA_WIDTH / 8);
 parameter REG_ADDR_WIDTH = 5;
+parameter ALU_OP_ENCODING_WIDTH = 4;
 
 wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
@@ -468,8 +470,47 @@ register_file register_file_inst (
     .rf_we()
 );
 
+instr_decoder #(
+    .INSTR_WIDTH(INSTR_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELECT_WIDTH(SELECT_WIDTH),
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
+) instr_decoder_inst (
+    // input instruction
+    .instr_i(),
+
+    // pure control signal outputs
+    .decoded_mem_rd_en_o(),
+    .decoded_mem_wr_en_o(),
+    .decoded_is_branch_type_o(),
+    .decoded_rf_w_src_mem_h_alu_l_o(),
+    .decoded_alu_src_reg_h_imm_low_o(),
+    .decoded_rf_wr_en_o(),
+
+    // other output signals with more concrete meaning
+    .decoded_sel_o(),
+    .decoded_rf_raddr_a_o(),
+    .decoded_rf_raddr_b_o(),
+    .decoded_imm_o(),
+    .decoded_alu_op_o(),
+    .decoded_rf_waddr_o()
+);
+
+id_forwarding_unit #(
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) id_forwarding_unit_inst (
+    .wb_en(),
+    .wb_addr(),
+    .rf_raddr_a(),
+    .rf_raddr_b(),
+    .operand_a_should_forward(),
+    .operand_b_should_forward()
+);
+
 ALU #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
 ) ALU_inst (
     .operand_a(),
     .operand_b(),

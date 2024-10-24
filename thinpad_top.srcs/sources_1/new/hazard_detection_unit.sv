@@ -39,7 +39,7 @@ assign bus_is_busy = if_stage_using_bus | mem_stage_using_bus;
 assign mem_stage_into_bubble = mem_stage_request_use & (~mem_stage_ack);
 assign exe_to_mem_wr_en = ~mem_stage_into_bubble;
 assign id_to_exe_wr_en = ~mem_stage_into_bubble;
-assign id_stage_into_bubble = 1'b0;
+assign id_stage_into_bubble = 1'd0;
 assign if_to_id_wr_en = if_stage_ack | (~mem_stage_into_bubble);
 assign pc_wr_en = if_stage_ack | 
                 (exe_stage_should_branch & 

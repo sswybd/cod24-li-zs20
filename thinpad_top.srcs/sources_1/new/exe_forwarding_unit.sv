@@ -1,4 +1,4 @@
-module exe_forwarding_unit # (
+module exe_forwarding_unit #(
     parameter REG_ADDR_WIDTH = 5
 ) (
     input wire exe_to_mem_rf_wr_en,
