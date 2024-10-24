@@ -114,6 +114,7 @@ parameter START_PC = 32'h8000_0000;
 parameter ADDR_WIDTH = 32;
 parameter DATA_WIDTH = 32;
 parameter SELECT_WIDTH = (DATA_WIDTH / 8);
+parameter REG_ADDR_WIDTH = 5;
 
 wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
@@ -447,7 +448,46 @@ PC_reg #(
     .START_PC(START_PC),
     .ADDR_WIDTH(ADDR_WIDTH)
 ) PC_reg_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .wr_en(),
+    .input_pc(),
+    .pc_is_from_branch(),
+    .output_pc()
+);
 
+register_file register_file_inst (
+    .clk(sys_clk),
+    .reset(sys_rst),
+    .rf_raddr_a(),
+    .rf_rdata_a(),
+    .rf_raddr_b(),
+    .rf_rdata_b(),
+    .rf_waddr(),
+    .rf_wdata(),
+    .rf_we()
+);
+
+ALU #(
+    .DATA_WIDTH(DATA_WIDTH)
+) ALU_inst (
+    .operand_a(),
+    .operand_b(),
+    .alu_op(),
+    .alu_result()
+);
+
+exe_forwarding_unit #(
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) exe_forwarding_unit_inst (
+    .exe_to_mem_rf_wr_en(),
+    .mem_to_wb_rf_wr_en(),
+    .exe_stage_operand_a_rf_addr(),
+    .exe_stage_operand_b_rf_addr(),
+    .exe_to_mem_rf_wr_addr(),
+    .mem_to_wb_rf_wr_addr(),
+    .forward_a(),
+    .forward_b()
 );
 
 endmodule
