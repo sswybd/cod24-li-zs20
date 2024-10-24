@@ -24,17 +24,17 @@ always_ff @(posedge sys_clk) begin
     end
     else begin
         if (!mem_stage_using_bus && if_stage_using_bus) begin
-            if (!pc_wr_en) begin
+            if (!pc_wr_en && exe_stage_should_branch) begin
                 if_stage_invalid <= 1'b1;
             end
-            else begin
+            else if (pc_wr_en) begin
                 if_stage_invalid <= 1'b0;
             end
         end
     end
 end
 
-assign if_stage_into_bubble = ~if_stage_ack;
+assign if_stage_into_bubble = (~if_stage_ack) | (exe_stage_should_branch & if_stage_ack);
 assign bus_is_busy = if_stage_using_bus | mem_stage_using_bus;
 assign mem_stage_into_bubble = mem_stage_request_use & (~mem_stage_ack);
 assign exe_to_mem_wr_en = ~mem_stage_into_bubble;

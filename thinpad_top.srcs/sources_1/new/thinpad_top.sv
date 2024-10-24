@@ -179,7 +179,11 @@ wire wbs2_cyc_i;
 
 
 // master0 => arbiter
-memory_controller_master instruction_memory_controller_master_inst (
+memory_controller_master #(
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELECT_WIDTH(SELECT_WIDTH)
+) instruction_memory_controller_master_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
     .addr_i(),
@@ -200,7 +204,11 @@ memory_controller_master instruction_memory_controller_master_inst (
 );
 
 // master1 (high priority) => arbiter
-memory_controller_master data_memory_and_peripheral_controller_master_inst (
+memory_controller_master #(
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELECT_WIDTH(SELECT_WIDTH)
+) data_memory_and_peripheral_controller_master_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
     .addr_i(),
@@ -435,6 +443,12 @@ hazard_detection_unit hazard_detection_unit_inst (
     .pc_wr_en()
 );
 
+PC_reg #(
+    .START_PC(START_PC),
+    .ADDR_WIDTH(ADDR_WIDTH)
+) PC_reg_inst (
+
+);
 
 endmodule
 
