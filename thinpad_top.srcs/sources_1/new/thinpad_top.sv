@@ -433,6 +433,7 @@ wire if_stage_invalid;
 wire if_stage_into_bubble;
 wire if_to_id_wr_en;
 wire id_stage_into_bubble;
+wire id_to_exe_wr_en;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -448,7 +449,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .bus_is_busy(bus_is_busy),
     .mem_stage_into_bubble(),
     .exe_to_mem_wr_en(),
-    .id_to_exe_wr_en(),
+    .id_to_exe_wr_en(id_to_exe_wr_en),
     .id_stage_into_bubble(id_stage_into_bubble),
     .if_to_id_wr_en(if_to_id_wr_en),
     .pc_wr_en()
@@ -457,11 +458,13 @@ hazard_detection_unit hazard_detection_unit_inst (
 wire [ADDR_WIDTH-1:0] next_normal_pc;
 assign next_normal_pc = 'd4 + if_stage_pc;
 
+wire [ADDR_WIDTH-1:0] branch_pc;
+
 pc_mux #(
     .ADDR_WIDTH(ADDR_WIDTH)
 ) pc_mux_inst (
     .next_normal_pc(next_normal_pc),
-    .branch_pc(),
+    .branch_pc(branch_pc),
     .pc_is_from_branch(),
     .pc_chosen(pc_chosen)
 );
@@ -528,6 +531,12 @@ wire decoded_is_branch_type;
 wire decoded_rf_w_src_mem_h_alu_l;
 wire decoded_alu_src_reg_h_imm_low;
 wire decoded_rf_wr_en;
+wire [1:0] decoded_sel_cnt;
+wire [DATA_WIDTH-1:0] decoded_imm;
+wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op;
+wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr;
+wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
+wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
@@ -547,12 +556,12 @@ instr_decoder #(
     .decoded_rf_wr_en_o(decoded_rf_wr_en),
 
     // other output signals with more concrete meaning
-    .decoded_sel_cnt_o(),
-    .decoded_rf_raddr_a_o(),
-    .decoded_rf_raddr_b_o(),
-    .decoded_imm_o(),
-    .decoded_alu_op_o(),
-    .decoded_rf_waddr_o()
+    .decoded_sel_cnt_o(decoded_sel_cnt),
+    .decoded_rf_raddr_a_o(decoded_rf_raddr_a),
+    .decoded_rf_raddr_b_o(decoded_rf_raddr_b),
+    .decoded_imm_o(decoded_imm),
+    .decoded_alu_op_o(decoded_alu_op),
+    .decoded_rf_waddr_o(decoded_rf_waddr)
 );
 
 wire id_stage_mem_rd_en_o;
@@ -577,6 +586,67 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .rf_w_src_mem_h_alu_l_o(id_stage_rf_w_src_mem_h_alu_l_o),
     .alu_src_reg_h_imm_low_o(id_stage_alu_src_reg_h_imm_low_o),
     .rf_wr_en_o(id_stage_rf_wr_en_o)
+);
+
+wire exe_stage_mem_rd_en;
+wire exe_stage_mem_wr_en;
+wire exe_stage_is_branch_type;
+wire exe_stage_rf_w_src_mem_h_alu_l;
+wire exe_stage_alu_src_reg_h_imm_low;
+wire exe_stage_rf_wr_en;
+wire [ADDR_WIDTH-1:0] exe_stage_pc;
+wire [1:0] exe_stage_sel_cnt;
+wire [DATA_WIDTH-1:0] exe_stage_rf_rdata_a;
+wire [DATA_WIDTH-1:0] exe_stage_rf_rdata_b;
+wire [DATA_WIDTH-1:0] exe_stage_imm;
+wire [ALU_OP_ENCODING_WIDTH-1:0] exe_stage_alu_op;
+wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_waddr;
+wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_a;
+wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
+
+assign branch_pc = exe_stage_pc + exe_stage_imm;
+
+ID_to_EXE_regs #(
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) ID_to_EXE_regs_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .wr_en(id_to_exe_wr_en),
+
+    .mem_rd_en_i(id_stage_mem_rd_en_o),
+    .mem_wr_en_i(id_stage_mem_wr_en_o),
+    .is_branch_type_i(id_stage_is_branch_type_o),
+    .rf_w_src_mem_h_alu_l_i(id_stage_rf_w_src_mem_h_alu_l_o),
+    .alu_src_reg_h_imm_low_i(id_stage_alu_src_reg_h_imm_low_o),
+    .rf_wr_en_i(id_stage_rf_wr_en_o),
+    .pc_i(id_stage_pc),
+    .sel_cnt_i(decoded_sel_cnt),
+    .rf_rdata_a_i(),
+    .rf_rdata_b_i(),
+    .imm_i(decoded_imm),
+    .alu_op_i(decoded_alu_op),
+    .rf_waddr_i(decoded_rf_waddr),
+    .rf_raddr_a_i(decoded_rf_raddr_a),
+    .rf_raddr_b_i(decoded_rf_raddr_b),
+
+    .mem_rd_en(exe_stage_mem_rd_en),
+    .mem_wr_en(exe_stage_mem_wr_en),
+    .is_branch_type(exe_stage_is_branch_type),
+    .rf_w_src_mem_h_alu_l(exe_stage_rf_w_src_mem_h_alu_l),
+    .alu_src_reg_h_imm_low(exe_stage_alu_src_reg_h_imm_low),
+    .rf_wr_en(exe_stage_rf_wr_en),
+    .pc(exe_stage_pc),
+    .sel_cnt(exe_stage_sel_cnt),
+    .rf_rdata_a(exe_stage_rf_rdata_a),
+    .rf_rdata_b(exe_stage_rf_rdata_b),
+    .imm(exe_stage_imm),
+    .alu_op(exe_stage_alu_op),
+    .rf_waddr(exe_stage_rf_waddr),
+    .rf_raddr_a(exe_stage_rf_raddr_a),
+    .rf_raddr_b(exe_stage_rf_raddr_b)
 );
 
 id_forwarding_unit #(

@@ -1,3 +1,5 @@
+`include "simple_reg_macro.sv"
+
 module IF_to_ID_regs #(
     parameter ADDR_WIDTH = 32,  // `PC` is an address, so use `ADDR_WIDTH`
     parameter INSTR_WIDTH = 32,
@@ -13,22 +15,7 @@ module IF_to_ID_regs #(
     output logic [ADDR_WIDTH-1:0] pc
 );
 
-always_ff @(posedge sys_clk) begin
-    if (sys_rst) begin
-        instr <= NOP;
-    end
-    else if (wr_en) begin
-        instr <= instr_i;
-    end
-end
-
-always_ff @(posedge sys_clk) begin
-    if (sys_rst) begin
-        pc <= {ADDR_WIDTH{'b0}};
-    end
-    else if (wr_en) begin
-        pc <= pc_i;
-    end
-end
+`simple_reg_with_reset(instr, instr_i, NOP);
+`simple_reg(pc, pc_i);
 
 endmodule
