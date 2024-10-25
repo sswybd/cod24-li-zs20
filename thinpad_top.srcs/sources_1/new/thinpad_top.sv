@@ -121,6 +121,7 @@ parameter ALU_OP_ENCODING_WIDTH = 4;
 wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
 wire bus_is_busy;
+wire [ADDR_WIDTH-1:0] if_stage_pc;
 
 /* =========== Wishbone code begin =========== */
 
@@ -189,7 +190,7 @@ memory_controller_master #(
 ) instruction_memory_controller_master_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .addr_i(),
+    .addr_i(if_stage_pc),
     .bus_is_busy(bus_is_busy),
     .wr_data_i({DATA_WIDTH{1'b0}}),
     .bus_data_i(wbm0_dat_i),
@@ -446,6 +447,20 @@ hazard_detection_unit hazard_detection_unit_inst (
     .pc_wr_en()
 );
 
+wire [ADDR_WIDTH-1:0] next_normal_pc;
+assign next_normal_pc = 'd4 + if_stage_pc;
+
+pc_mux #(
+    .ADDR_WIDTH(ADDR_WIDTH)
+) pc_mux_inst (
+    .next_normal_pc(next_normal_pc),
+    .branch_pc(),
+    .pc_is_from_branch(),
+    .pc_chosen(pc_chosen)
+);
+
+wire [ADDR_WIDTH-1:0] pc_chosen;
+
 PC_reg #(
     .START_PC(START_PC),
     .ADDR_WIDTH(ADDR_WIDTH)
@@ -453,9 +468,9 @@ PC_reg #(
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
     .wr_en(),
-    .input_pc(),
+    .input_pc(pc_chosen),
     .pc_is_from_branch(),
-    .output_pc()
+    .output_pc(if_stage_pc)
 );
 
 register_file register_file_inst (
