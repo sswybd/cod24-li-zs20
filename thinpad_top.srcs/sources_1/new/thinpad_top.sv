@@ -432,6 +432,7 @@ uart_controller #(
 wire if_stage_invalid;
 wire if_stage_into_bubble;
 wire if_to_id_wr_en;
+wire id_stage_into_bubble;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -448,7 +449,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .mem_stage_into_bubble(),
     .exe_to_mem_wr_en(),
     .id_to_exe_wr_en(),
-    .id_stage_into_bubble(),
+    .id_stage_into_bubble(id_stage_into_bubble),
     .if_to_id_wr_en(if_to_id_wr_en),
     .pc_wr_en()
 );
@@ -521,6 +522,13 @@ register_file register_file_inst (
     .rf_we()
 );
 
+wire decoded_mem_rd_en;
+wire decoded_mem_wr_en;
+wire decoded_is_branch_type;
+wire decoded_rf_w_src_mem_h_alu_l;
+wire decoded_alu_src_reg_h_imm_low;
+wire decoded_rf_wr_en;
+
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
@@ -531,12 +539,12 @@ instr_decoder #(
     .instr_i(),
 
     // pure control signal outputs
-    .decoded_mem_rd_en_o(),
-    .decoded_mem_wr_en_o(),
-    .decoded_is_branch_type_o(),
-    .decoded_rf_w_src_mem_h_alu_l_o(),
-    .decoded_alu_src_reg_h_imm_low_o(),
-    .decoded_rf_wr_en_o(),
+    .decoded_mem_rd_en_o(decoded_mem_rd_en),
+    .decoded_mem_wr_en_o(decoded_mem_wr_en),
+    .decoded_is_branch_type_o(decoded_is_branch_type),
+    .decoded_rf_w_src_mem_h_alu_l_o(decoded_rf_w_src_mem_h_alu_l),
+    .decoded_alu_src_reg_h_imm_low_o(decoded_alu_src_reg_h_imm_low),
+    .decoded_rf_wr_en_o(decoded_rf_wr_en),
 
     // other output signals with more concrete meaning
     .decoded_sel_cnt_o(),
@@ -545,6 +553,30 @@ instr_decoder #(
     .decoded_imm_o(),
     .decoded_alu_op_o(),
     .decoded_rf_waddr_o()
+);
+
+wire id_stage_mem_rd_en_o;
+wire id_stage_mem_wr_en_o;
+wire id_stage_is_branch_type_o;
+wire id_stage_rf_w_src_mem_h_alu_l_o;
+wire id_stage_alu_src_reg_h_imm_low_o;
+wire id_stage_rf_wr_en_o;
+
+id_stage_bubblify_unit id_stage_bubblify_unit_inst (
+    .mem_rd_en_i(decoded_mem_rd_en),
+    .mem_wr_en_i(decoded_mem_wr_en),
+    .is_branch_type_i(decoded_is_branch_type),
+    .rf_w_src_mem_h_alu_l_i(decoded_rf_w_src_mem_h_alu_l),
+    .alu_src_reg_h_imm_low_i(decoded_alu_src_reg_h_imm_low),
+    .rf_wr_en_i(decoded_rf_wr_en),
+    .id_stage_into_bubble_i(id_stage_into_bubble),
+
+    .mem_rd_en_o(id_stage_mem_rd_en_o),
+    .mem_wr_en_o(id_stage_mem_wr_en_o),
+    .is_branch_type_o(id_stage_is_branch_type_o),
+    .rf_w_src_mem_h_alu_l_o(id_stage_rf_w_src_mem_h_alu_l_o),
+    .alu_src_reg_h_imm_low_o(id_stage_alu_src_reg_h_imm_low_o),
+    .rf_wr_en_o(id_stage_rf_wr_en_o)
 );
 
 id_forwarding_unit #(
