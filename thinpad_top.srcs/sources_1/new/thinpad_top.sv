@@ -122,6 +122,7 @@ wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
 wire bus_is_busy;
 wire [ADDR_WIDTH-1:0] if_stage_pc;
+wire [INSTR_WIDTH-1:0] fetched_instr;
 
 /* =========== Wishbone code begin =========== */
 
@@ -200,7 +201,7 @@ memory_controller_master #(
     .wr_en(1'd0),
     .ack_o(instruction_mem_ack),
     .stb_o(wbm0_stb_o),
-    .rd_data_o(),
+    .rd_data_o(fetched_instr),
     .bus_data_o(wbm0_dat_o),
     .addr_o(wbm0_addr_o),
     .wb_sel_o(wbm0_sel_o),
@@ -427,6 +428,9 @@ uart_controller #(
 
 /* =========== Wishbone code end =========== */
 
+wire if_stage_invalid;
+wire if_stage_into_bubble;
+
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -436,8 +440,8 @@ hazard_detection_unit hazard_detection_unit_inst (
     .if_stage_using_bus(wbm0_stb_o),
     .mem_stage_using_bus(wbm1_stb_o),
     .mem_stage_request_use(),
-    .if_stage_invalid(),
-    .if_stage_into_bubble(),
+    .if_stage_invalid(if_stage_invalid),
+    .if_stage_into_bubble(if_stage_into_bubble),
     .bus_is_busy(bus_is_busy),
     .mem_stage_into_bubble(),
     .exe_to_mem_wr_en(),
@@ -472,6 +476,17 @@ PC_reg #(
     .pc_is_from_branch(),
     .output_pc(if_stage_pc)
 );
+
+nop_instr_mux #(
+    .INSTR_WIDTH(INSTR_WIDTH)
+) nop_instr_mux_inst (
+    .if_stage_into_bubble(if_stage_into_bubble),
+    .if_stage_invalid(if_stage_invalid),
+    .fetched_instr(fetched_instr),
+    .if_stage_instr_o(if_stage_instr_o)
+);
+
+wire [INSTR_WIDTH-1:0] if_stage_instr_o;
 
 register_file register_file_inst (
     .clk(sys_clk),
