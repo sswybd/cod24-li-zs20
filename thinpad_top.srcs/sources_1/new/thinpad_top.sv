@@ -117,6 +117,7 @@ parameter INSTR_WIDTH = 32;
 parameter SELECT_WIDTH = (DATA_WIDTH / 8);
 parameter REG_ADDR_WIDTH = 5;
 parameter ALU_OP_ENCODING_WIDTH = 4;
+parameter [INSTR_WIDTH-1:0] NOP = 'h00000013
 
 wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
@@ -430,6 +431,7 @@ uart_controller #(
 
 wire if_stage_invalid;
 wire if_stage_into_bubble;
+wire if_to_id_wr_en;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -447,7 +449,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .exe_to_mem_wr_en(),
     .id_to_exe_wr_en(),
     .id_stage_into_bubble(),
-    .if_to_id_wr_en(),
+    .if_to_id_wr_en(if_to_id_wr_en),
     .pc_wr_en()
 );
 
@@ -477,8 +479,11 @@ PC_reg #(
     .output_pc(if_stage_pc)
 );
 
+wire [INSTR_WIDTH-1:0] if_stage_instr_o;
+
 nop_instr_mux #(
-    .INSTR_WIDTH(INSTR_WIDTH)
+    .INSTR_WIDTH(INSTR_WIDTH),
+    .NOP(NOP)
 ) nop_instr_mux_inst (
     .if_stage_into_bubble(if_stage_into_bubble),
     .if_stage_invalid(if_stage_invalid),
@@ -486,7 +491,23 @@ nop_instr_mux #(
     .if_stage_instr_o(if_stage_instr_o)
 );
 
-wire [INSTR_WIDTH-1:0] if_stage_instr_o;
+wire [INSTR_WIDTH-1:0] id_stage_instr;
+wire [ADDR_WIDTH-1:0] id_stage_pc;
+
+IF_to_ID_regs #(
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .INSTR_WIDTH(INSTR_WIDTH),
+    .NOP(NOP)
+) IF_to_ID_regs_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .wr_en(if_to_id_wr_en),
+    .instr_i(if_stage_instr_o),
+    .pc_i(if_stage_pc),
+
+    .instr(id_stage_instr),
+    .pc(id_stage_pc)
+);
 
 register_file register_file_inst (
     .clk(sys_clk),

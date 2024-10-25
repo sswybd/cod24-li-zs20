@@ -1,6 +1,6 @@
 module nop_instr_mux #(
     parameter INSTR_WIDTH = 32,
-    localparam [INSTR_WIDTH-1:0] NOP = 'h00000013;
+    parameter [INSTR_WIDTH-1:0] NOP = 'h00000013
 ) (
     input wire if_stage_into_bubble,
     input wire if_stage_invalid,
