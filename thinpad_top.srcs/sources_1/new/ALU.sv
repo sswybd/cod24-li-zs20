@@ -24,6 +24,8 @@ assign alu_result = ({(DATA_WIDTH-1){alu_op == 'd1}}  & (operand_a + operand_b))
                 ((operand_a << operand_b[SHIFT_RANGE-1:0]) | 
                      (operand_a >> ('d32 - operand_b[SHIFT_RANGE-1:0]))
                 )
-               );
+               ) |
+               ({(DATA_WIDTH-1){alu_op == 'd11}}  &  operand_a) |  // output `operand_a`
+               ({(DATA_WIDTH-1){alu_op == 'd12}}  &  operand_b);  // output `operand_b`
 
 endmodule

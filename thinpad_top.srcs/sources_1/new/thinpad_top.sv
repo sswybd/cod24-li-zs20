@@ -473,7 +473,6 @@ register_file register_file_inst (
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
-    .SELECT_WIDTH(SELECT_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
 ) instr_decoder_inst (
@@ -489,7 +488,7 @@ instr_decoder #(
     .decoded_rf_wr_en_o(),
 
     // other output signals with more concrete meaning
-    .decoded_sel_o(),
+    .decoded_sel_cnt_o(),
     .decoded_rf_raddr_a_o(),
     .decoded_rf_raddr_b_o(),
     .decoded_imm_o(),
