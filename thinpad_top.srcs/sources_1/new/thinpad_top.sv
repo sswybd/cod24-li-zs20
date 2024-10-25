@@ -660,6 +660,26 @@ id_forwarding_unit #(
     .operand_b_should_forward()
 );
 
+exe_forward_operand_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) exe_forward_a_mux_inst (
+    .exe_stage_rf_rdata(),
+    .wb_stage_wr_rf_data(),
+    .exe_to_mem_alu_result(),
+    .forward(),
+    .operand()
+);
+
+exe_forward_operand_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) exe_forward_b_mux_inst (
+    .exe_stage_rf_rdata(),
+    .wb_stage_wr_rf_data(),
+    .exe_to_mem_alu_result(),
+    .forward(),
+    .operand()
+);
+
 ALU #(
     .DATA_WIDTH(DATA_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
