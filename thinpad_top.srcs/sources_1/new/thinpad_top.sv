@@ -660,34 +660,54 @@ id_forwarding_unit #(
     .operand_b_should_forward()
 );
 
+wire exe_stage_forward_a;
+wire exe_stage_forward_b;
+
+wire [DATA_WIDTH-1:0] exe_stage_operand_a;
+
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
 ) exe_forward_a_mux_inst (
-    .exe_stage_rf_rdata(),
-    .wb_stage_wr_rf_data(),
-    .exe_to_mem_alu_result(),
-    .forward(),
-    .operand()
+    .exe_stage_rf_rdata_i(exe_stage_rf_rdata_a),
+    .wb_stage_wr_rf_data_i(),
+    .exe_to_mem_alu_result_i(),
+    .forward_ctrl_i(exe_stage_forward_a),
+    .operand_o(exe_stage_operand_a)
 );
+
+wire [DATA_WIDTH-1:0] exe_stage_non_imm_operand_b;
 
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
 ) exe_forward_b_mux_inst (
-    .exe_stage_rf_rdata(),
-    .wb_stage_wr_rf_data(),
-    .exe_to_mem_alu_result(),
-    .forward(),
-    .operand()
+    .exe_stage_rf_rdata_i(exe_stage_rf_rdata_b),
+    .wb_stage_wr_rf_data_i(),
+    .exe_to_mem_alu_result_i(),
+    .forward_ctrl_i(exe_stage_forward_b),
+    .operand_o(exe_stage_non_imm_operand_b)
 );
+
+wire [DATA_WIDTH-1:0] exe_stage_operand_b;
+
+imm_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) imm_mux_inst (
+    .non_imm_i(exe_stage_non_imm_operand_b),
+    .imm_i(exe_stage_imm),
+    .non_imm_h_imm_low_ctrl_i(exe_stage_alu_src_reg_h_imm_low),
+    .operand_o(exe_stage_operand_b)
+);
+
+wire [DATA_WIDTH-1:0] exe_stage_alu_result;
 
 ALU #(
     .DATA_WIDTH(DATA_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
 ) ALU_inst (
-    .operand_a(),
-    .operand_b(),
-    .alu_op(),
-    .alu_result()
+    .operand_a(exe_stage_operand_a),
+    .operand_b(exe_stage_operand_b),
+    .alu_op(exe_stage_alu_op),
+    .alu_result(exe_stage_alu_result)
 );
 
 exe_forwarding_unit #(
@@ -695,12 +715,12 @@ exe_forwarding_unit #(
 ) exe_forwarding_unit_inst (
     .exe_to_mem_rf_wr_en(),
     .mem_to_wb_rf_wr_en(),
-    .exe_stage_operand_a_rf_addr(),
-    .exe_stage_operand_b_rf_addr(),
+    .exe_stage_operand_a_rf_addr(exe_stage_rf_raddr_a),
+    .exe_stage_operand_b_rf_addr(exe_stage_rf_raddr_b),
     .exe_to_mem_rf_wr_addr(),
     .mem_to_wb_rf_wr_addr(),
-    .forward_a(),
-    .forward_b()
+    .forward_a(exe_stage_forward_a),
+    .forward_b(exe_stage_forward_b)
 );
 
 endmodule
