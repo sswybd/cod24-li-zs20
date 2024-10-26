@@ -434,6 +434,10 @@ wire if_stage_into_bubble;
 wire if_to_id_wr_en;
 wire id_stage_into_bubble;
 wire id_to_exe_wr_en;
+wire exe_to_mem_wr_en;
+
+wire mem_stage_mem_rd_en;
+wire mem_stage_mem_wr_en;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -448,7 +452,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .if_stage_into_bubble(if_stage_into_bubble),
     .bus_is_busy(bus_is_busy),
     .mem_stage_into_bubble(),
-    .exe_to_mem_wr_en(),
+    .exe_to_mem_wr_en(exe_to_mem_wr_en),
     .id_to_exe_wr_en(id_to_exe_wr_en),
     .id_stage_into_bubble(id_stage_into_bubble),
     .if_to_id_wr_en(if_to_id_wr_en),
@@ -665,13 +669,14 @@ wire exe_stage_forward_a;
 wire exe_stage_forward_b;
 
 wire [DATA_WIDTH-1:0] exe_stage_operand_a;
+wire [DATA_WIDTH-1:0] mem_stage_alu_result;
 
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
 ) exe_forward_a_mux_inst (
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_a),
     .wb_stage_wr_rf_data_i(),
-    .exe_to_mem_alu_result_i(),
+    .exe_to_mem_alu_result_i(mem_stage_alu_result),
     .forward_ctrl_i(exe_stage_forward_a),
     .operand_o(exe_stage_operand_a)
 );
@@ -683,7 +688,7 @@ exe_forward_operand_mux #(
 ) exe_forward_b_mux_inst (
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_b),
     .wb_stage_wr_rf_data_i(),
-    .exe_to_mem_alu_result_i(),
+    .exe_to_mem_alu_result_i(mem_stage_alu_result),
     .forward_ctrl_i(exe_stage_forward_b),
     .operand_o(exe_stage_non_imm_operand_b)
 );
@@ -717,6 +722,9 @@ branch_taker branch_taker_inst (
     .take_branch_o(pc_is_from_branch)
 );
 
+wire mem_stage_rf_wr_en;
+wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_waddr;
+
 exe_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
 ) exe_forwarding_unit_inst (
@@ -724,10 +732,44 @@ exe_forwarding_unit #(
     .mem_to_wb_rf_wr_en(),
     .exe_stage_operand_a_rf_addr(exe_stage_rf_raddr_a),
     .exe_stage_operand_b_rf_addr(exe_stage_rf_raddr_b),
-    .exe_to_mem_rf_wr_addr(),
+    .exe_to_mem_rf_wr_addr(mem_stage_rf_waddr),
     .mem_to_wb_rf_wr_addr(),
     .forward_a(exe_stage_forward_a),
     .forward_b(exe_stage_forward_b)
+);
+
+wire mem_stage_rf_w_src_mem_h_alu_l;
+wire [1:0] mem_stage_sel_cnt;
+wire [DATA_WIDTH-1:0] mem_stage_non_imm_operand_b;
+wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_raddr_b;
+
+EXE_to_MEM_regs #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) EXE_to_MEM_regs_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .wr_en(exe_to_mem_wr_en),
+
+    .mem_rd_en_i(exe_stage_mem_rd_en),
+    .mem_wr_en_i(exe_stage_mem_wr_en),
+    .rf_w_src_mem_h_alu_l_i(exe_stage_rf_w_src_mem_h_alu_l),
+    .rf_wr_en_i(exe_stage_rf_wr_en),
+    .sel_cnt_i(exe_stage_sel_cnt),
+    .alu_result_i(exe_stage_alu_result),
+    .non_imm_operand_b_i(exe_stage_non_imm_operand_b),
+    .rf_waddr_i(exe_stage_rf_waddr),
+    .rf_raddr_b_i(exe_stage_rf_raddr_b),
+
+    .mem_rd_en(mem_stage_mem_rd_en),
+    .mem_wr_en(mem_stage_mem_wr_en),
+    .rf_w_src_mem_h_alu_l(mem_stage_rf_w_src_mem_h_alu_l),
+    .rf_wr_en(mem_stage_rf_wr_en),
+    .sel_cnt(mem_stage_sel_cnt),
+    .alu_result(mem_stage_alu_result),
+    .non_imm_operand_b(mem_stage_non_imm_operand_b),
+    .rf_waddr(mem_stage_rf_waddr),
+    .rf_raddr_b(mem_stage_rf_raddr_b)
 );
 
 endmodule

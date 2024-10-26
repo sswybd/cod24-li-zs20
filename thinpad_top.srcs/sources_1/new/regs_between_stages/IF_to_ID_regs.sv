@@ -1,7 +1,7 @@
 `include "simple_reg_macro.sv"
 
 module IF_to_ID_regs #(
-    parameter ADDR_WIDTH = 32,  // `PC` is an address, so use `ADDR_WIDTH`
+    parameter ADDR_WIDTH = 32,
     parameter INSTR_WIDTH = 32,
     parameter [INSTR_WIDTH-1:0] NOP = 'h00000013
 ) (
