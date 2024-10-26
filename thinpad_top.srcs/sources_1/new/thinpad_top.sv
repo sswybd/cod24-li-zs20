@@ -445,6 +445,7 @@ wire exe_to_mem_wr_en;
 
 wire mem_stage_request_use;
 assign mem_stage_request_use = mem_stage_mem_rd_en | mem_stage_mem_wr_en;
+wire mem_stage_into_bubble;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -458,7 +459,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .if_stage_invalid(if_stage_invalid),
     .if_stage_into_bubble(if_stage_into_bubble),
     .bus_is_busy(bus_is_busy),
-    .mem_stage_into_bubble(),
+    .mem_stage_into_bubble(mem_stage_into_bubble),
     .exe_to_mem_wr_en(exe_to_mem_wr_en),
     .id_to_exe_wr_en(id_to_exe_wr_en),
     .id_stage_into_bubble(id_stage_into_bubble),
@@ -785,6 +786,38 @@ unaligned_transfer_unit #(
     .wr_data_i(mem_stage_non_imm_operand_b),
     .sel_o(mem_stage_sel),
     .wr_data_o(mem_stage_wr_data)
+);
+
+wire final_mem_stage_rf_w_src_mem_h_alu_l;
+wire final_mem_stage_rf_wr_en;
+
+mem_stage_bubblify_mux mem_stage_bubblify_mux_inst (
+    .into_bubble_i(mem_stage_into_bubble),
+    .rf_w_src_mem_h_alu_l_i(mem_stage_rf_w_src_mem_h_alu_l),
+    .rf_wr_en_i(mem_stage_rf_wr_en),
+    .rf_w_src_mem_h_alu_l_o(final_mem_stage_rf_w_src_mem_h_alu_l),
+    .rf_wr_en_o(final_mem_stage_rf_wr_en)
+);
+
+MEM_to_WB_regs #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) MEM_to_WB_regs_inst (
+    .sys_clk(sys_clk),
+    .sys_rst(sys_rst),
+    .wr_en(),
+
+    .rf_w_src_mem_h_alu_l_i(),
+    .rf_wr_en_i(),
+    .rd_mem_data_i(),
+    .alu_result_i(),
+    .rf_waddr_i(),
+
+    .rf_w_src_mem_h_alu_l(),
+    .rf_wr_en(),
+    .rd_mem_data(),
+    .alu_result(),
+    .rf_waddr()
 );
 
 endmodule
