@@ -438,7 +438,7 @@ wire id_to_exe_wr_en;
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .exe_stage_should_branch(),
+    .exe_stage_should_branch(pc_is_from_branch),
     .mem_stage_ack(data_mem_and_peripheral_ack),
     .if_stage_ack(instruction_mem_ack),
     .if_stage_using_bus(wbm0_stb_o),
@@ -459,13 +459,14 @@ wire [ADDR_WIDTH-1:0] next_normal_pc;
 assign next_normal_pc = 'd4 + if_stage_pc;
 
 wire [ADDR_WIDTH-1:0] branch_pc;
+wire pc_is_from_branch;
 
 pc_mux #(
     .ADDR_WIDTH(ADDR_WIDTH)
 ) pc_mux_inst (
     .next_normal_pc(next_normal_pc),
     .branch_pc(branch_pc),
-    .pc_is_from_branch(),
+    .pc_is_from_branch(pc_is_from_branch),
     .pc_chosen(pc_chosen)
 );
 
@@ -479,7 +480,7 @@ PC_reg #(
     .sys_rst(sys_rst),
     .wr_en(),
     .input_pc(pc_chosen),
-    .pc_is_from_branch(),
+    .pc_is_from_branch(pc_is_from_branch),
     .output_pc(if_stage_pc)
 );
 
@@ -708,6 +709,12 @@ ALU #(
     .operand_b(exe_stage_operand_b),
     .alu_op(exe_stage_alu_op),
     .alu_result(exe_stage_alu_result)
+);
+
+branch_taker branch_taker_inst (
+    .is_branch_i(exe_stage_is_branch_type),
+    .should_branch_i(exe_stage_alu_result),
+    .take_branch_o(pc_is_from_branch)
 );
 
 exe_forwarding_unit #(
