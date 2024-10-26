@@ -125,6 +125,13 @@ wire bus_is_busy;
 wire [ADDR_WIDTH-1:0] if_stage_pc;
 wire [INSTR_WIDTH-1:0] fetched_instr;
 
+wire [DATA_WIDTH-1:0] mem_stage_non_imm_operand_b;
+wire [DATA_WIDTH-1:0] mem_stage_alu_result;
+wire mem_stage_mem_rd_en;
+wire mem_stage_mem_wr_en;
+wire [SELECT_WIDTH-1:0] mem_stage_sel;
+wire [DATA_WIDTH-1:0] mem_stage_wr_data;
+
 /* =========== Wishbone code begin =========== */
 
 // master0/1 <-> arbiter
@@ -217,14 +224,14 @@ memory_controller_master #(
 ) data_memory_and_peripheral_controller_master_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .addr_i(),
+    .addr_i(mem_stage_alu_result),
     .bus_is_busy(bus_is_busy),
-    .wr_data_i(),
+    .wr_data_i(mem_stage_wr_data),
     .bus_data_i(wbm1_dat_i),
-    .sel_i(),
+    .sel_i(mem_stage_sel),
     .ack_i(wbm1_ack_i),
-    .rd_en(),
-    .wr_en(),
+    .rd_en(mem_stage_mem_rd_en),
+    .wr_en(mem_stage_mem_wr_en),
     .ack_o(data_mem_and_peripheral_ack),
     .stb_o(wbm1_stb_o),
     .rd_data_o(),
@@ -436,8 +443,8 @@ wire id_stage_into_bubble;
 wire id_to_exe_wr_en;
 wire exe_to_mem_wr_en;
 
-wire mem_stage_mem_rd_en;
-wire mem_stage_mem_wr_en;
+wire mem_stage_request_use;
+assign mem_stage_request_use = mem_stage_mem_rd_en | mem_stage_mem_wr_en;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -447,7 +454,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .if_stage_ack(instruction_mem_ack),
     .if_stage_using_bus(wbm0_stb_o),
     .mem_stage_using_bus(wbm1_stb_o),
-    .mem_stage_request_use(),
+    .mem_stage_request_use(mem_stage_request_use),
     .if_stage_invalid(if_stage_invalid),
     .if_stage_into_bubble(if_stage_into_bubble),
     .bus_is_busy(bus_is_busy),
@@ -669,7 +676,6 @@ wire exe_stage_forward_a;
 wire exe_stage_forward_b;
 
 wire [DATA_WIDTH-1:0] exe_stage_operand_a;
-wire [DATA_WIDTH-1:0] mem_stage_alu_result;
 
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
@@ -740,8 +746,6 @@ exe_forwarding_unit #(
 
 wire mem_stage_rf_w_src_mem_h_alu_l;
 wire [1:0] mem_stage_sel_cnt;
-wire [DATA_WIDTH-1:0] mem_stage_non_imm_operand_b;
-wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_raddr_b;
 
 EXE_to_MEM_regs #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -759,7 +763,6 @@ EXE_to_MEM_regs #(
     .alu_result_i(exe_stage_alu_result),
     .non_imm_operand_b_i(exe_stage_non_imm_operand_b),
     .rf_waddr_i(exe_stage_rf_waddr),
-    .rf_raddr_b_i(exe_stage_rf_raddr_b),
 
     .mem_rd_en(mem_stage_mem_rd_en),
     .mem_wr_en(mem_stage_mem_wr_en),
@@ -768,8 +771,20 @@ EXE_to_MEM_regs #(
     .sel_cnt(mem_stage_sel_cnt),
     .alu_result(mem_stage_alu_result),
     .non_imm_operand_b(mem_stage_non_imm_operand_b),
-    .rf_waddr(mem_stage_rf_waddr),
-    .rf_raddr_b(mem_stage_rf_raddr_b)
+    .rf_waddr(mem_stage_rf_waddr)
+);
+
+unaligned_transfer_unit #(
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .SELECT_WIDTH(SELECT_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH)
+) unaligned_transfer_unit_inst (
+    .sel_cnt_i(mem_stage_sel_cnt),
+    .mem_stage_request_use_i(mem_stage_request_use),
+    .mem_addr_i(mem_stage_alu_result),
+    .wr_data_i(mem_stage_non_imm_operand_b),
+    .sel_o(mem_stage_sel),
+    .wr_data_o(mem_stage_wr_data)
 );
 
 endmodule

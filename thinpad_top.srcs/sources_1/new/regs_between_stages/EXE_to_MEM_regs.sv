@@ -16,7 +16,6 @@ module EXE_to_MEM_regs #(
     input wire [DATA_WIDTH-1:0] alu_result_i,
     input wire [DATA_WIDTH-1:0] non_imm_operand_b_i,
     input wire [REG_ADDR_WIDTH-1:0] rf_waddr_i,
-    input wire [REG_ADDR_WIDTH-1:0] rf_raddr_b_i,
 
     output logic mem_rd_en,
     output logic mem_wr_en,
@@ -25,8 +24,7 @@ module EXE_to_MEM_regs #(
     output logic [1:0] sel_cnt,
     output logic [DATA_WIDTH-1:0] alu_result,
     output logic [DATA_WIDTH-1:0] non_imm_operand_b,
-    output logic [REG_ADDR_WIDTH-1:0] rf_waddr,
-    output logic [REG_ADDR_WIDTH-1:0] rf_raddr_b
+    output logic [REG_ADDR_WIDTH-1:0] rf_waddr
 );
 
 `simple_reg(mem_rd_en, mem_rd_en_i);
@@ -37,6 +35,5 @@ module EXE_to_MEM_regs #(
 `simple_reg(alu_result, alu_result_i);
 `simple_reg(non_imm_operand_b, non_imm_operand_b_i);
 `simple_reg(rf_waddr, rf_waddr_i);
-`simple_reg(rf_raddr_b, rf_raddr_b_i);
 
 endmodule
