@@ -40,12 +40,13 @@ assign funct3 = instr_i[14:12];
 assign decoded_rf_waddr_o = ((opcode_segment != B_TYPE_OPCODE) && (opcode_segment != S_TYPE_OPCODE)) ? instr_i[11:7] : 'd0;
 
 // TODO: yet to support more instrs and elaborate on the details
-assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :                                         // output operand_b
+assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :                                               // output operand_b
                           ((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)     
-                            || ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b000))
-                            || ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b000))) ? 'd1 :        // add
-                            ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000)) ? 'd5 :            // xor
-                            ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b111)) ? 'd3 : 'd0; // and
+                        || ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b000))
+                        || ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b000))) ? 'd1 :                   // add
+                          ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000)) ? 'd5 :                     // xor
+                          ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b111)) ? 'd3 :  // and
+                          'd0;
 
 
 
