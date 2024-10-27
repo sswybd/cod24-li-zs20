@@ -810,6 +810,8 @@ EXE_to_MEM_regs #(
     .rf_waddr(mem_stage_rf_waddr)
 );
 
+wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
+
 unaligned_transfer_unit #(
     .ADDR_WIDTH(ADDR_WIDTH),
     .SELECT_WIDTH(SELECT_WIDTH),
@@ -819,8 +821,10 @@ unaligned_transfer_unit #(
     .mem_stage_request_use_i(mem_stage_request_use),
     .mem_addr_i(mem_stage_alu_result),
     .wr_data_i(mem_stage_non_imm_operand_b),
+    .rd_mem_data_i(raw_rd_mem_data),
     .sel_o(mem_stage_sel),
-    .wr_data_o(mem_stage_wr_data)
+    .wr_data_o(mem_stage_wr_data),
+    .transfered_rd_mem_data_o(mem_stage_rd_mem_data)
 );
 
 wire final_mem_stage_rf_w_src_mem_h_alu_l;
@@ -837,16 +841,6 @@ mem_stage_bubblify_mux mem_stage_bubblify_mux_inst (
 wire [DATA_WIDTH-1:0] wb_stage_rd_mem_data;
 wire [DATA_WIDTH-1:0] wb_stage_alu_result;
 wire wb_stage_rf_w_src_mem_h_alu_l;
-wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
-
-unaligned_rd_transfer_unit #(
-    .SELECT_WIDTH(SELECT_WIDTH),
-    .DATA_WIDTH(DATA_WIDTH)
-) unaligned_rd_transfer_unit_inst (
-    .sel_i(mem_stage_sel),
-    .rd_mem_data_i(raw_rd_mem_data),
-    .transfered_mem_data_o(mem_stage_rd_mem_data)
-);
 
 MEM_to_WB_regs #(
     .DATA_WIDTH(DATA_WIDTH),
