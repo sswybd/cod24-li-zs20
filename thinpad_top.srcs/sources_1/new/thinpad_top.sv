@@ -535,7 +535,10 @@ wire wb_stage_rf_wr_en;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
-register_file register_file_inst (
+register_file #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) register_file_inst (
     .clk(sys_clk),
     .reset(sys_rst),
     .rf_raddr_a(decoded_rf_raddr_a),
@@ -705,8 +708,8 @@ ID_to_EXE_regs #(
     .rf_raddr_b(exe_stage_rf_raddr_b)
 );
 
-wire exe_stage_forward_a;
-wire exe_stage_forward_b;
+wire [1:0] exe_stage_forward_a;
+wire [1:0] exe_stage_forward_b;
 
 wire [DATA_WIDTH-1:0] exe_stage_operand_a;
 
@@ -757,7 +760,7 @@ ALU #(
 
 branch_taker branch_taker_inst (
     .is_branch_i(exe_stage_is_branch_type),
-    .should_branch_i(exe_stage_alu_result),
+    .alu_branch_result_i(exe_stage_alu_result),
     .take_branch_o(pc_is_from_branch)
 );
 
