@@ -1,4 +1,4 @@
-`include "simple_reg_macro.sv"
+`include "simple_reg_macro.h"
 
 module IF_to_ID_regs #(
     parameter ADDR_WIDTH = 32,

@@ -445,6 +445,7 @@ wire id_to_exe_wr_en;
 wire exe_to_mem_wr_en;
 wire mem_stage_into_bubble;
 wire pc_wr_en;
+wire pc_is_from_branch;
 
 wire mem_stage_request_use;
 assign mem_stage_request_use = mem_stage_mem_rd_en | mem_stage_mem_wr_en;
@@ -473,7 +474,7 @@ wire [ADDR_WIDTH-1:0] next_normal_pc;
 assign next_normal_pc = 'd4 + if_stage_pc;
 
 wire [ADDR_WIDTH-1:0] branch_pc;
-wire pc_is_from_branch;
+wire [ADDR_WIDTH-1:0] pc_chosen;
 
 pc_mux #(
     .ADDR_WIDTH(ADDR_WIDTH)
@@ -483,8 +484,6 @@ pc_mux #(
     .pc_is_from_branch(pc_is_from_branch),
     .pc_chosen(pc_chosen)
 );
-
-wire [ADDR_WIDTH-1:0] pc_chosen;
 
 PC_reg #(
     .START_PC(START_PC),
@@ -533,6 +532,8 @@ wire [DATA_WIDTH-1:0] raw_rf_rdata_a;
 wire [DATA_WIDTH-1:0] raw_rf_rdata_b;
 wire [REG_ADDR_WIDTH-1:0] wb_stage_rf_waddr;
 wire wb_stage_rf_wr_en;
+wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
+wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
 register_file register_file_inst (
     .clk(sys_clk),
@@ -556,8 +557,6 @@ wire [1:0] decoded_sel_cnt;
 wire [DATA_WIDTH-1:0] decoded_imm;
 wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr;
-wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
-wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),

@@ -1,4 +1,4 @@
-`include "simple_reg_macro.sv"
+`include "simple_reg_macro.h"
 
 module EXE_to_MEM_regs #(
     parameter DATA_WIDTH = 32,
