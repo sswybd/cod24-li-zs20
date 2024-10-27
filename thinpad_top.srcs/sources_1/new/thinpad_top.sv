@@ -131,6 +131,7 @@ wire mem_stage_mem_rd_en;
 wire mem_stage_mem_wr_en;
 wire [SELECT_WIDTH-1:0] mem_stage_sel;
 wire [DATA_WIDTH-1:0] mem_stage_wr_data;
+wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
 
 /* =========== Wishbone code begin =========== */
 
@@ -234,7 +235,7 @@ memory_controller_master #(
     .wr_en(mem_stage_mem_wr_en),
     .ack_o(data_mem_and_peripheral_ack),
     .stb_o(wbm1_stb_o),
-    .rd_data_o(),
+    .rd_data_o(mem_stage_rd_mem_data),
     .bus_data_o(wbm1_dat_o),
     .addr_o(wbm1_addr_o),
     .wb_sel_o(wbm1_sel_o),
@@ -526,6 +527,8 @@ IF_to_ID_regs #(
     .pc(id_stage_pc)
 );
 
+wire [DATA_WIDTH-1:0] wb_stage_wr_rf_data;
+
 register_file register_file_inst (
     .clk(sys_clk),
     .reset(sys_rst),
@@ -534,7 +537,7 @@ register_file register_file_inst (
     .rf_raddr_b(),
     .rf_rdata_b(),
     .rf_waddr(),
-    .rf_wdata(),
+    .rf_wdata(wb_stage_wr_rf_data),
     .rf_we()
 );
 
@@ -799,25 +802,38 @@ mem_stage_bubblify_mux mem_stage_bubblify_mux_inst (
     .rf_wr_en_o(final_mem_stage_rf_wr_en)
 );
 
+wire [DATA_WIDTH-1:0] wb_stage_rd_mem_data;
+wire [DATA_WIDTH-1:0] wb_stage_alu_result;
+wire wb_stage_rf_w_src_mem_h_alu_l;
+
 MEM_to_WB_regs #(
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
 ) MEM_to_WB_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .wr_en(),
+    .wr_en(1'd1),
 
-    .rf_w_src_mem_h_alu_l_i(),
-    .rf_wr_en_i(),
-    .rd_mem_data_i(),
-    .alu_result_i(),
-    .rf_waddr_i(),
+    .rf_w_src_mem_h_alu_l_i(final_mem_stage_rf_w_src_mem_h_alu_l),
+    .rf_wr_en_i(final_mem_stage_rf_wr_en),
+    .rd_mem_data_i(mem_stage_rd_mem_data),
+    .alu_result_i(mem_stage_alu_result),
+    .rf_waddr_i(mem_stage_rf_waddr),
 
-    .rf_w_src_mem_h_alu_l(),
+    .rf_w_src_mem_h_alu_l(wb_stage_rf_w_src_mem_h_alu_l),
     .rf_wr_en(),
-    .rd_mem_data(),
-    .alu_result(),
+    .rd_mem_data(wb_stage_rd_mem_data),
+    .alu_result(wb_stage_alu_result),
     .rf_waddr()
+);
+
+wb_source_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) (
+    .rd_mem_data_i(wb_stage_rd_mem_data),
+    .alu_result_i(wb_stage_alu_result),
+    .wb_source_mem_h_alu_l_ctrl_i(wb_stage_rf_w_src_mem_h_alu_l),
+    .wb_data_o(wb_stage_wr_rf_data)
 );
 
 endmodule
