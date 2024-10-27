@@ -131,7 +131,7 @@ wire mem_stage_mem_rd_en;
 wire mem_stage_mem_wr_en;
 wire [SELECT_WIDTH-1:0] mem_stage_sel;
 wire [DATA_WIDTH-1:0] mem_stage_wr_data;
-wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
+wire [DATA_WIDTH-1:0] raw_rd_mem_data;
 
 /* =========== Wishbone code begin =========== */
 
@@ -235,7 +235,7 @@ memory_controller_master #(
     .wr_en(mem_stage_mem_wr_en),
     .ack_o(data_mem_and_peripheral_ack),
     .stb_o(wbm1_stb_o),
-    .rd_data_o(mem_stage_rd_mem_data),
+    .rd_data_o(raw_rd_mem_data),
     .bus_data_o(wbm1_dat_o),
     .addr_o(wbm1_addr_o),
     .wb_sel_o(wbm1_sel_o),
@@ -837,6 +837,16 @@ mem_stage_bubblify_mux mem_stage_bubblify_mux_inst (
 wire [DATA_WIDTH-1:0] wb_stage_rd_mem_data;
 wire [DATA_WIDTH-1:0] wb_stage_alu_result;
 wire wb_stage_rf_w_src_mem_h_alu_l;
+wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
+
+unaligned_rd_transfer_unit #(
+    .SELECT_WIDTH(SELECT_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH)
+) unaligned_rd_transfer_unit_inst (
+    .sel_i(mem_stage_sel),
+    .rd_mem_data_i(raw_rd_mem_data),
+    .transfered_mem_data_o(mem_stage_rd_mem_data)
+);
 
 MEM_to_WB_regs #(
     .DATA_WIDTH(DATA_WIDTH),
