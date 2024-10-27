@@ -528,14 +528,16 @@ IF_to_ID_regs #(
 );
 
 wire [DATA_WIDTH-1:0] wb_stage_wr_rf_data;
+wire [DATA_WIDTH-1:0] raw_rf_rdata_a;
+wire [DATA_WIDTH-1:0] raw_rf_rdata_b;
 
 register_file register_file_inst (
     .clk(sys_clk),
     .reset(sys_rst),
     .rf_raddr_a(),
-    .rf_rdata_a(),
+    .rf_rdata_a(raw_rf_rdata_a),
     .rf_raddr_b(),
-    .rf_rdata_b(),
+    .rf_rdata_b(raw_rf_rdata_b),
     .rf_waddr(),
     .rf_wdata(wb_stage_wr_rf_data),
     .rf_we()
@@ -580,6 +582,31 @@ instr_decoder #(
     .decoded_rf_waddr_o(decoded_rf_waddr)
 );
 
+wire id_stage_forward_a;
+wire id_stage_forward_b;
+
+wire [DATA_WIDTH-1:0] id_stage_rf_rdata_a;
+
+id_forward_rf_rdata_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) id_forward_a_mux_inst (
+    .rf_rdata_i(raw_rf_rdata_a),
+    .wr_rf_data_i(wb_stage_wr_rf_data),
+    .forward_ctrl_i(id_stage_forward_a),
+    .rf_rdata_o(id_stage_rf_rdata_a)
+);
+
+wire [DATA_WIDTH-1:0] id_stage_rf_rdata_b;
+
+id_forward_rf_rdata_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) id_forward_b_mux_inst (
+    .rf_rdata_i(raw_rf_rdata_b),
+    .wr_rf_data_i(wb_stage_wr_rf_data),
+    .forward_ctrl_i(id_stage_forward_b),
+    .rf_rdata_o(id_stage_rf_rdata_b)
+);
+
 wire id_stage_mem_rd_en_o;
 wire id_stage_mem_wr_en_o;
 wire id_stage_is_branch_type_o;
@@ -622,6 +649,17 @@ wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
 
 assign branch_pc = exe_stage_pc + exe_stage_imm;
 
+id_forwarding_unit #(
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+) id_forwarding_unit_inst (
+    .wb_en(),
+    .wb_addr(),
+    .rf_raddr_a(),
+    .rf_raddr_b(),
+    .operand_a_should_forward(id_stage_forward_a),
+    .operand_b_should_forward(id_stage_forward_b)
+);
+
 ID_to_EXE_regs #(
     .ADDR_WIDTH(ADDR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
@@ -640,8 +678,8 @@ ID_to_EXE_regs #(
     .rf_wr_en_i(id_stage_rf_wr_en_o),
     .pc_i(id_stage_pc),
     .sel_cnt_i(decoded_sel_cnt),
-    .rf_rdata_a_i(),
-    .rf_rdata_b_i(),
+    .rf_rdata_a_i(id_stage_rf_rdata_a),
+    .rf_rdata_b_i(id_stage_rf_rdata_b),
     .imm_i(decoded_imm),
     .alu_op_i(decoded_alu_op),
     .rf_waddr_i(decoded_rf_waddr),
@@ -663,17 +701,6 @@ ID_to_EXE_regs #(
     .rf_waddr(exe_stage_rf_waddr),
     .rf_raddr_a(exe_stage_rf_raddr_a),
     .rf_raddr_b(exe_stage_rf_raddr_b)
-);
-
-id_forwarding_unit #(
-    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
-) id_forwarding_unit_inst (
-    .wb_en(),
-    .wb_addr(),
-    .rf_raddr_a(),
-    .rf_raddr_b(),
-    .operand_a_should_forward(),
-    .operand_b_should_forward()
 );
 
 wire exe_stage_forward_a;
