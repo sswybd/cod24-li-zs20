@@ -117,7 +117,7 @@ parameter INSTR_WIDTH = 32;
 parameter SELECT_WIDTH = (DATA_WIDTH / 8);
 parameter REG_ADDR_WIDTH = 5;
 parameter ALU_OP_ENCODING_WIDTH = 4;
-parameter [INSTR_WIDTH-1:0] NOP = 'h00000013
+parameter [INSTR_WIDTH-1:0] NOP = 'h00000013;
 
 wire data_mem_and_peripheral_ack;
 wire instruction_mem_ack;
@@ -443,10 +443,11 @@ wire if_to_id_wr_en;
 wire id_stage_into_bubble;
 wire id_to_exe_wr_en;
 wire exe_to_mem_wr_en;
+wire mem_stage_into_bubble;
+wire pc_wr_en;
 
 wire mem_stage_request_use;
 assign mem_stage_request_use = mem_stage_mem_rd_en | mem_stage_mem_wr_en;
-wire mem_stage_into_bubble;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
@@ -465,7 +466,7 @@ hazard_detection_unit hazard_detection_unit_inst (
     .id_to_exe_wr_en(id_to_exe_wr_en),
     .id_stage_into_bubble(id_stage_into_bubble),
     .if_to_id_wr_en(if_to_id_wr_en),
-    .pc_wr_en()
+    .pc_wr_en(pc_wr_en)
 );
 
 wire [ADDR_WIDTH-1:0] next_normal_pc;
@@ -491,7 +492,7 @@ PC_reg #(
 ) PC_reg_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .wr_en(),
+    .wr_en(pc_wr_en),
     .input_pc(pc_chosen),
     .pc_is_from_branch(pc_is_from_branch),
     .output_pc(if_stage_pc)
@@ -530,17 +531,19 @@ IF_to_ID_regs #(
 wire [DATA_WIDTH-1:0] wb_stage_wr_rf_data;
 wire [DATA_WIDTH-1:0] raw_rf_rdata_a;
 wire [DATA_WIDTH-1:0] raw_rf_rdata_b;
+wire [REG_ADDR_WIDTH-1:0] wb_stage_rf_waddr;
+wire wb_stage_rf_wr_en;
 
 register_file register_file_inst (
     .clk(sys_clk),
     .reset(sys_rst),
-    .rf_raddr_a(),
+    .rf_raddr_a(decoded_rf_raddr_a),
     .rf_rdata_a(raw_rf_rdata_a),
-    .rf_raddr_b(),
+    .rf_raddr_b(decoded_rf_raddr_b),
     .rf_rdata_b(raw_rf_rdata_b),
-    .rf_waddr(),
+    .rf_waddr(wb_stage_rf_waddr),
     .rf_wdata(wb_stage_wr_rf_data),
-    .rf_we()
+    .rf_we(wb_stage_rf_wr_en)
 );
 
 wire decoded_mem_rd_en;
@@ -563,7 +566,7 @@ instr_decoder #(
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
 ) instr_decoder_inst (
     // input instruction
-    .instr_i(),
+    .instr_i(id_stage_instr),
 
     // pure control signal outputs
     .decoded_mem_rd_en_o(decoded_mem_rd_en),
@@ -652,10 +655,10 @@ assign branch_pc = exe_stage_pc + exe_stage_imm;
 id_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
 ) id_forwarding_unit_inst (
-    .wb_en(),
-    .wb_addr(),
-    .rf_raddr_a(),
-    .rf_raddr_b(),
+    .wb_en(wb_stage_rf_wr_en),
+    .wb_addr(wb_stage_rf_waddr),
+    .rf_raddr_a(decoded_rf_raddr_a),
+    .rf_raddr_b(decoded_rf_raddr_b),
     .operand_a_should_forward(id_stage_forward_a),
     .operand_b_should_forward(id_stage_forward_b)
 );
@@ -712,7 +715,7 @@ exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
 ) exe_forward_a_mux_inst (
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_a),
-    .wb_stage_wr_rf_data_i(),
+    .wb_stage_wr_rf_data_i(wb_stage_wr_rf_data),
     .exe_to_mem_alu_result_i(mem_stage_alu_result),
     .forward_ctrl_i(exe_stage_forward_a),
     .operand_o(exe_stage_operand_a)
@@ -724,7 +727,7 @@ exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
 ) exe_forward_b_mux_inst (
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_b),
-    .wb_stage_wr_rf_data_i(),
+    .wb_stage_wr_rf_data_i(wb_stage_wr_rf_data),
     .exe_to_mem_alu_result_i(mem_stage_alu_result),
     .forward_ctrl_i(exe_stage_forward_b),
     .operand_o(exe_stage_non_imm_operand_b)
@@ -765,14 +768,14 @@ wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_waddr;
 exe_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
 ) exe_forwarding_unit_inst (
-    .exe_to_mem_rf_wr_en(),
-    .mem_to_wb_rf_wr_en(),
-    .exe_stage_operand_a_rf_addr(exe_stage_rf_raddr_a),
-    .exe_stage_operand_b_rf_addr(exe_stage_rf_raddr_b),
-    .exe_to_mem_rf_wr_addr(mem_stage_rf_waddr),
-    .mem_to_wb_rf_wr_addr(),
-    .forward_a(exe_stage_forward_a),
-    .forward_b(exe_stage_forward_b)
+    .exe_to_mem_rf_wr_en_i(mem_stage_rf_wr_en),
+    .mem_to_wb_rf_wr_en_i(wb_stage_rf_wr_en),
+    .exe_stage_operand_a_rf_addr_i(exe_stage_rf_raddr_a),
+    .exe_stage_operand_b_rf_addr_i(exe_stage_rf_raddr_b),
+    .exe_to_mem_rf_wr_addr_i(mem_stage_rf_waddr),
+    .mem_to_wb_rf_wr_addr_i(wb_stage_rf_waddr),
+    .forward_a_o(exe_stage_forward_a),
+    .forward_b_o(exe_stage_forward_b)
 );
 
 wire mem_stage_rf_w_src_mem_h_alu_l;
@@ -848,15 +851,15 @@ MEM_to_WB_regs #(
     .rf_waddr_i(mem_stage_rf_waddr),
 
     .rf_w_src_mem_h_alu_l(wb_stage_rf_w_src_mem_h_alu_l),
-    .rf_wr_en(),
+    .rf_wr_en(wb_stage_rf_wr_en),
     .rd_mem_data(wb_stage_rd_mem_data),
     .alu_result(wb_stage_alu_result),
-    .rf_waddr()
+    .rf_waddr(wb_stage_rf_waddr)
 );
 
 wb_source_mux #(
     .DATA_WIDTH(DATA_WIDTH)
-) (
+) wb_source_mux_inst (
     .rd_mem_data_i(wb_stage_rd_mem_data),
     .alu_result_i(wb_stage_alu_result),
     .wb_source_mem_h_alu_l_ctrl_i(wb_stage_rf_w_src_mem_h_alu_l),
