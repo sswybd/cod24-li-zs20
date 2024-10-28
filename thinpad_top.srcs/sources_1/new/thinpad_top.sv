@@ -191,6 +191,8 @@ wire wbs2_stb_i;
 wire wbs2_ack_o;
 wire wbs2_cyc_i;
 
+// TODO: for better performance, write a simple custom arbiter instead of this one
+// because this arbiter will introduce more than one gap between cycs
 
 // master0 => arbiter
 memory_controller_master #(
@@ -243,12 +245,11 @@ memory_controller_master #(
 );
 
 // arbiter => MUX
-wb_arbiter_2 #(
-    .ARB_LSB_HIGH_PRIORITY(0)
-) arbiter_inst (
-    .clk(sys_clk),
-    .rst(sys_rst),
-
+simple_wb_arbiter_2 #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .SELECT_WIDTH(SELECT_WIDTH)
+) simple_wb_arbiter_2_inst (
     /*
      * Wishbone master 0 input
      */
