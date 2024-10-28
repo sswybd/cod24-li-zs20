@@ -191,8 +191,6 @@ wire wbs2_stb_i;
 wire wbs2_ack_o;
 wire wbs2_cyc_i;
 
-// TODO: for better performance, write a simple custom arbiter instead of this one
-// because this arbiter will introduce more than one gap between cycs
 
 // master0 => arbiter
 memory_controller_master #(
