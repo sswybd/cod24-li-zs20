@@ -191,6 +191,8 @@ wire wbs2_stb_i;
 wire wbs2_ack_o;
 wire wbs2_cyc_i;
 
+wire any_ack;
+assign any_ack = wbm0_ack_i | wbm1_ack_i;
 
 // master0 => arbiter
 memory_controller_master #(
@@ -205,10 +207,9 @@ memory_controller_master #(
     .wr_data_i({DATA_WIDTH{1'b0}}),
     .bus_data_i(wbm0_dat_i),
     .sel_i(4'b1111),
-    .ack_i(wbm0_ack_i),
+    .ack_i(any_ack),
     .rd_en(1'd1),
     .wr_en(1'd0),
-    .ack_o(instruction_mem_ack),
     .stb_o(wbm0_stb_o),
     .rd_data_o(fetched_instr),
     .bus_data_o(wbm0_dat_o),
@@ -230,10 +231,9 @@ memory_controller_master #(
     .wr_data_i(mem_stage_wr_data),
     .bus_data_i(wbm1_dat_i),
     .sel_i(mem_stage_sel),
-    .ack_i(wbm1_ack_i),
+    .ack_i(any_ack),
     .rd_en(mem_stage_mem_rd_en),
     .wr_en(mem_stage_mem_wr_en),
-    .ack_o(data_mem_and_peripheral_ack),
     .stb_o(wbm1_stb_o),
     .rd_data_o(raw_rd_mem_data),
     .bus_data_o(wbm1_dat_o),
@@ -453,8 +453,8 @@ hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
     .exe_stage_should_branch(pc_is_from_branch),
-    .mem_stage_ack(data_mem_and_peripheral_ack),
-    .if_stage_ack(instruction_mem_ack),
+    .mem_stage_ack(wbm1_ack_i),
+    .if_stage_ack(wbm0_ack_i),
     .if_stage_using_bus(wbm0_stb_o),
     .mem_stage_using_bus(wbm1_stb_o),
     .mem_stage_request_use(mem_stage_request_use),

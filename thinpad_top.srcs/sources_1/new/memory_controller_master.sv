@@ -10,10 +10,9 @@ module memory_controller_master #(
     input wire [DATA_WIDTH-1:0] wr_data_i,
     input wire [DATA_WIDTH-1:0] bus_data_i,
     input wire [SELECT_WIDTH-1:0] sel_i,
-    input wire ack_i,
+    input wire ack_i,  // OR the two masters' ack
     input wire rd_en,
     input wire wr_en,
-    output wire ack_o,
     output logic stb_o,
     output wire [DATA_WIDTH-1:0] rd_data_o,
     output wire [DATA_WIDTH-1:0] bus_data_o,
@@ -21,8 +20,6 @@ module memory_controller_master #(
     output wire [SELECT_WIDTH-1:0] wb_sel_o,
     output wire we_o
 );
-
-assign ack_o = ack_i;
 
 wire want_to_use;
 assign want_to_use = rd_en | wr_en;
