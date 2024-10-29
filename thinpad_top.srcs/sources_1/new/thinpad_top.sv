@@ -119,8 +119,6 @@ parameter REG_ADDR_WIDTH = 5;
 parameter ALU_OP_ENCODING_WIDTH = 4;
 parameter [INSTR_WIDTH-1:0] NOP = 'h00000013;
 
-wire data_mem_and_peripheral_ack;
-wire instruction_mem_ack;
 wire bus_is_busy;
 wire [ADDR_WIDTH-1:0] if_stage_pc;
 wire [INSTR_WIDTH-1:0] fetched_instr;
