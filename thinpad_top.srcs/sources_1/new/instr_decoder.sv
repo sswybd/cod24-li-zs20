@@ -9,7 +9,9 @@ module instr_decoder #(
     localparam S_TYPE_OPCODE = 5'b01000,
     localparam BASIC_I_TYPE_WITHOUT_LOAD_OPCODE = 5'b00100,
     localparam R_TYPE_OPCODE = 5'b01100,
-    localparam LOAD_TYPE_OPCODE = 5'b00000
+    localparam LOAD_TYPE_OPCODE = 5'b00000,
+    localparam J_TYPE_OPCODE = 5'b11011,  // only JAL is of J-type
+    localparam AUIPC_OPCODE = 5'b00101
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
 

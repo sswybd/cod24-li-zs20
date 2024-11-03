@@ -821,7 +821,7 @@ unaligned_transfer_unit #(
     .rd_mem_data_i(raw_rd_mem_data),
     .sel_o(mem_stage_sel),
     .wr_data_o(mem_stage_wr_data),
-    .transfered_rd_mem_data_o(mem_stage_rd_mem_data)
+    .transferred_rd_mem_data_o(mem_stage_rd_mem_data)
 );
 
 wire final_mem_stage_rf_w_src_mem_h_alu_l;

@@ -11,11 +11,12 @@ module unaligned_transfer_unit #(
 
     output wire [SELECT_WIDTH-1:0] sel_o,
     output wire [DATA_WIDTH-1:0] wr_data_o,
-    output wire [DATA_WIDTH-1:0] transfered_rd_mem_data_o
+    output wire [DATA_WIDTH-1:0] transferred_rd_mem_data_o
 );
 
-assign wr_data_o = mem_stage_request_use_i ? (wr_data_i << ((mem_addr_i - ((mem_addr_i >> 'd2) << 'd2)) << 'd3))
-                    : 'd0;
+assign wr_data_o = mem_stage_request_use_i ?
+                  (wr_data_i << ((mem_addr_i - ((mem_addr_i >> 'd2) << 'd2)) << 'd3)) :
+                   'd0;
 
 wire [SELECT_WIDTH-1:0] sel;
 
@@ -30,9 +31,9 @@ assign sel_o = sel << (mem_addr_i - ((mem_addr_i >> 'd2) << 'd2));
 wire sel_byte_3;               wire sel_byte_2;               wire sel_byte_1;               wire sel_byte_0;
 assign sel_byte_3 = sel_o[3];  assign sel_byte_2 = sel_o[2];  assign sel_byte_1 = sel_o[1];  assign sel_byte_0 = sel_o[0];
 
-wire [DATA_WIDTH-1:0] transfered_mem_data;
+wire [DATA_WIDTH-1:0] transferred_mem_data;
 // filter out `xxx` signals first
-assign transfered_mem_data = 
+assign transferred_mem_data = 
         {
             sel_byte_3 ? rd_mem_data_i[31:24] : 8'd0,
             sel_byte_2 ? rd_mem_data_i[23:16] : 8'd0,
@@ -40,8 +41,8 @@ assign transfered_mem_data =
             sel_byte_0 ? rd_mem_data_i[ 7: 0] : 8'b0
         };
 
-assign transfered_rd_mem_data_o = mem_stage_request_use_i ?
-            (transfered_mem_data >> ((mem_addr_i - ((mem_addr_i >> 'd2) << 'd2)) << 'd3))  // srl here
+assign transferred_rd_mem_data_o = mem_stage_request_use_i ?
+            (transferred_mem_data >> ((mem_addr_i - ((mem_addr_i >> 'd2) << 'd2)) << 'd3))  // srl here
             : 'd0;
 
 endmodule
