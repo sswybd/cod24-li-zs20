@@ -11,7 +11,8 @@ module instr_decoder #(
     localparam R_TYPE_OPCODE = 5'b01100,
     localparam LOAD_TYPE_OPCODE = 5'b00000,
     localparam J_TYPE_OPCODE = 5'b11011,  // only JAL is of J-type
-    localparam AUIPC_OPCODE = 5'b00101
+    localparam AUIPC_OPCODE = 5'b00101,
+    localparam JALR_OPCODE = 5'b11001
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
 
@@ -22,6 +23,9 @@ module instr_decoder #(
     output wire decoded_rf_w_src_mem_h_alu_l_o,
     output wire decoded_alu_src_reg_h_imm_low_o,
     output wire decoded_rf_wr_en_o,
+    output wire decoded_is_uncond_jmp_o,
+    output wire decoded_operand_a_is_from_pc_o,
+    output wire decoded_jmp_src_reg_h_imm_l_o,
 
     output wire [1:0] decoded_sel_cnt_o,  // 2'd0 means lw/sw; 2'd1 means lb/wb; 2'd2 means lh/sw; 2'd3 means nill
     output wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a_o,
@@ -39,28 +43,42 @@ assign funct3 = instr_i[14:12];
 
 // just in case, to ensure the destination reg is set to zero if not needed, 
 // maybe preventing possible and unwanted forwarding
-assign decoded_rf_waddr_o = ((opcode_segment != B_TYPE_OPCODE) && (opcode_segment != S_TYPE_OPCODE)) ? instr_i[11:7] : 'd0;
+assign decoded_rf_waddr_o = ((opcode_segment != B_TYPE_OPCODE) && (opcode_segment != S_TYPE_OPCODE)) ?
+                            instr_i[11:7] : 'd0;
 
-// TODO: yet to support more instrs and elaborate on the details
 assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :                                               // output operand_b
-                          ((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)     
-                        || ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b000))
-                        || ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b000))) ? 'd1 :                   // add
-                          ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000)) ? 'd5 :                     // xor
+                          ((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)
+                        || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) && (funct3 == 3'b000))
+                        || (opcode_segment == AUIPC_OPCODE) || (opcode_segment == JALR_OPCODE)) ? 'd1 :       // add
+                          (((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000))
+                        || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
+                          (funct3 == 3'b100))) ? 'd5 :                     // xor
                           ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b111)) ? 'd3 :  // and
+                          ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b001)) ? 'd10 :  // xnor
+                          (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
+                          (funct3 == 3'b110)) ? 'd4 :  // or
+                          (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
+                          (funct3 == 3'b001)) ? 'd7 :  // sll
+                          (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
+                          (funct3 == 3'b101)) ? 'd8 :  // srl
                           'd0;
 
-
-
-// TODO: yet to support more instrs and elaborate on the details
 always_comb begin
     decoded_imm_o = 'd0;
 
-    if ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)) begin
+    if ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) ||
+        (opcode_segment == LOAD_TYPE_OPCODE) ||
+        (opcode_segment == JALR_OPCODE)) begin
         decoded_imm_o[11:0] = instr_i[31:20];
-        decoded_imm_o[31:12] = {20{instr_i[31]}};  // sign extension
+        if (!((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) &&
+              ((funct3 == 3'b001) || (funct3 == 3'b101)))) begin  // not a shift
+            decoded_imm_o[31:12] = {20{instr_i[31]}};  // sign extension
+        end
+        else begin  // a shift
+            decoded_imm_o[11:5] = 'd0;
+        end
     end
-    else if (opcode_segment == LUI_OPCODE) begin
+    else if ((opcode_segment == LUI_OPCODE) || (opcode_segment == AUIPC_OPCODE)) begin
         decoded_imm_o[31:12] = instr_i[31:12];
     end
     else if (opcode_segment == S_TYPE_OPCODE) begin
@@ -72,19 +90,23 @@ always_comb begin
         decoded_imm_o[12:0] = {instr_i[31], instr_i[7], instr_i[30:25], instr_i[11:8], 1'b0};
         decoded_imm_o[31:12] = {20{instr_i[31]}};  // sign extension
     end
+    else if (opcode_segment == J_TYPE_OPCODE) begin
+        decoded_imm_o[31:21] = {11{instr_i[31]}};  // sign extension
+        decoded_imm_o[20:0] = {instr_i[31], instr_i[19:12], instr_i[20], instr_i[30:21], 1'b0};
+    end
     else begin
         decoded_imm_o = 'd0;
     end
 end
 
-// TODO: yet to support more instrs and elaborate on the details
-assign decoded_rf_raddr_b_o = ((opcode_segment == B_TYPE_OPCODE) || (opcode_segment == S_TYPE_OPCODE) ||
+assign decoded_rf_raddr_b_o = ((opcode_segment == B_TYPE_OPCODE) ||
+                               (opcode_segment == S_TYPE_OPCODE) ||
                                (opcode_segment == R_TYPE_OPCODE)) ? instr_i[24:20] : 'd0;
 
-// TODO: yet to support more instrs and elaborate on the details
-assign decoded_rf_raddr_a_o = (opcode_segment != LUI_OPCODE) ? instr_i[19:15] : 'd0;
+assign decoded_rf_raddr_a_o = ((opcode_segment != LUI_OPCODE) &&
+                               (opcode_segment != AUIPC_OPCODE) &&
+                               (opcode_segment != J_TYPE_OPCODE)) ? instr_i[19:15] : 'd0;
 
-// TODO: yet to support more instrs and elaborate on the details
 assign decoded_sel_cnt_o = (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
                          && (funct3 == 3'b000)) ? 'd1 :  // byte
                          (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
@@ -92,28 +114,32 @@ assign decoded_sel_cnt_o = (((opcode_segment == S_TYPE_OPCODE) || (opcode_segmen
                         (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
                          && (funct3 == 3'b010)) ? 'd0 : 'd0;   // word
 
-// TODO: yet to support more instrs and elaborate on the details
-assign decoded_rf_wr_en_o = (opcode_segment == LUI_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)
-                            || (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE)
-                            || (opcode_segment == R_TYPE_OPCODE);
+assign decoded_jmp_src_reg_h_imm_l_o = (opcode_segment == JALR_OPCODE);
 
-// TODO: yet to support more instrs and elaborate on the details
+assign decoded_operand_a_is_from_pc_o = (opcode_segment == AUIPC_OPCODE);
+
+assign decoded_is_uncond_jmp_o = ((opcode_segment == J_TYPE_OPCODE) || (opcode_segment == JALR_OPCODE));
+
+assign decoded_rf_wr_en_o = (opcode_segment == LUI_OPCODE) ||
+                            (opcode_segment == LOAD_TYPE_OPCODE) ||
+                            (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) ||
+                            (opcode_segment == R_TYPE_OPCODE) ||
+                            (opcode_segment == AUIPC_OPCODE) ||
+                            (opcode_segment == J_TYPE_OPCODE) ||
+                            (opcode_segment == JALR_OPCODE);
+
 assign decoded_alu_src_reg_h_imm_low_o = ((opcode_segment == LUI_OPCODE) || 
                                           (opcode_segment == S_TYPE_OPCODE) ||
                                           (opcode_segment == LOAD_TYPE_OPCODE) ||
-                                          (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE)) ? 1'd0 :
+                                          (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) ||
+                                          (opcode_segment == AUIPC_OPCODE) ||
+                                          (opcode_segment == JALR_OPCODE)) ? 1'd0 :
                                          ((opcode_segment == B_TYPE_OPCODE) ||
                                           (opcode_segment == R_TYPE_OPCODE)) ? 1'd1 : 1'd0;
 
-// TODO: yet to support more instrs and elaborate on the details
-assign decoded_rf_w_src_mem_h_alu_l_o = ((opcode_segment == LUI_OPCODE) || 
-                                         (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) ||
-                                         (opcode_segment == R_TYPE_OPCODE)) ? 1'd0 :
-                                         ((opcode_segment == LOAD_TYPE_OPCODE)) ? 1'd1 : 1'd0;
+assign decoded_rf_w_src_mem_h_alu_l_o = (opcode_segment == LOAD_TYPE_OPCODE);
 
-// TODO: yet to support more instrs and elaborate on the details
 assign decoded_is_branch_type_o = (opcode_segment == B_TYPE_OPCODE);
-
 
 assign decoded_mem_wr_en_o = (opcode_segment == S_TYPE_OPCODE);
 assign decoded_mem_rd_en_o = (opcode_segment == LOAD_TYPE_OPCODE);

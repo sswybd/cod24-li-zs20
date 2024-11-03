@@ -553,6 +553,9 @@ wire decoded_is_branch_type;
 wire decoded_rf_w_src_mem_h_alu_l;
 wire decoded_alu_src_reg_h_imm_low;
 wire decoded_rf_wr_en;
+wire decoded_is_uncond_jmp;
+wire decoded_operand_a_is_from_pc;
+wire decoded_jmp_src_reg_h_imm_l;
 wire [1:0] decoded_sel_cnt;
 wire [DATA_WIDTH-1:0] decoded_imm;
 wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op;
@@ -574,6 +577,9 @@ instr_decoder #(
     .decoded_rf_w_src_mem_h_alu_l_o(decoded_rf_w_src_mem_h_alu_l),
     .decoded_alu_src_reg_h_imm_low_o(decoded_alu_src_reg_h_imm_low),
     .decoded_rf_wr_en_o(decoded_rf_wr_en),
+    .decoded_is_uncond_jmp_o(decoded_is_uncond_jmp),
+    .decoded_operand_a_is_from_pc_o(decoded_operand_a_is_from_pc),
+    .decoded_jmp_src_reg_h_imm_l_o(decoded_jmp_src_reg_h_imm_l),
 
     // other output signals with more concrete meaning
     .decoded_sel_cnt_o(decoded_sel_cnt),
@@ -615,6 +621,9 @@ wire id_stage_is_branch_type_o;
 wire id_stage_rf_w_src_mem_h_alu_l_o;
 wire id_stage_alu_src_reg_h_imm_low_o;
 wire id_stage_rf_wr_en_o;
+wire id_stage_is_uncond_jmp;
+wire id_stage_operand_a_is_from_pc;
+wire id_stage_jmp_src_reg_h_imm_l;
 
 id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .mem_rd_en_i(decoded_mem_rd_en),
@@ -623,6 +632,10 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .rf_w_src_mem_h_alu_l_i(decoded_rf_w_src_mem_h_alu_l),
     .alu_src_reg_h_imm_low_i(decoded_alu_src_reg_h_imm_low),
     .rf_wr_en_i(decoded_rf_wr_en),
+    .is_uncond_jmp_i(decoded_is_uncond_jmp),
+    .operand_a_is_from_pc_i(decoded_operand_a_is_from_pc),
+    .jmp_src_reg_h_imm_l_i(decoded_jmp_src_reg_h_imm_l),
+
     .id_stage_into_bubble_i(id_stage_into_bubble),
 
     .mem_rd_en_o(id_stage_mem_rd_en_o),
@@ -630,7 +643,10 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .is_branch_type_o(id_stage_is_branch_type_o),
     .rf_w_src_mem_h_alu_l_o(id_stage_rf_w_src_mem_h_alu_l_o),
     .alu_src_reg_h_imm_low_o(id_stage_alu_src_reg_h_imm_low_o),
-    .rf_wr_en_o(id_stage_rf_wr_en_o)
+    .rf_wr_en_o(id_stage_rf_wr_en_o),
+    .is_uncond_jmp_o(id_stage_is_uncond_jmp),
+    .operand_a_is_from_pc_o(id_stage_operand_a_is_from_pc),
+    .jmp_src_reg_h_imm_l_o(id_stage_jmp_src_reg_h_imm_l)
 );
 
 wire exe_stage_mem_rd_en;
@@ -639,6 +655,9 @@ wire exe_stage_is_branch_type;
 wire exe_stage_rf_w_src_mem_h_alu_l;
 wire exe_stage_alu_src_reg_h_imm_low;
 wire exe_stage_rf_wr_en;
+wire exe_stage_is_uncond_jmp;
+wire exe_stage_operand_a_is_from_pc;
+wire exe_stage_jmp_src_reg_h_imm_l;
 wire [ADDR_WIDTH-1:0] exe_stage_pc;
 wire [1:0] exe_stage_sel_cnt;
 wire [DATA_WIDTH-1:0] exe_stage_rf_rdata_a;
@@ -649,7 +668,8 @@ wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_waddr;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
 
-assign branch_pc = exe_stage_pc + exe_stage_imm;
+wire [ADDR_WIDTH-1:0] direct_jmp_dest;
+assign direct_jmp_dest = exe_stage_pc + exe_stage_imm;
 
 id_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
@@ -678,6 +698,9 @@ ID_to_EXE_regs #(
     .rf_w_src_mem_h_alu_l_i(id_stage_rf_w_src_mem_h_alu_l_o),
     .alu_src_reg_h_imm_low_i(id_stage_alu_src_reg_h_imm_low_o),
     .rf_wr_en_i(id_stage_rf_wr_en_o),
+    .is_uncond_jmp_i(id_stage_is_uncond_jmp),
+    .operand_a_is_from_pc_i(id_stage_operand_a_is_from_pc),
+    .jmp_src_reg_h_imm_l_i(id_stage_jmp_src_reg_h_imm_l),
     .pc_i(id_stage_pc),
     .sel_cnt_i(decoded_sel_cnt),
     .rf_rdata_a_i(id_stage_rf_rdata_a),
@@ -694,6 +717,9 @@ ID_to_EXE_regs #(
     .rf_w_src_mem_h_alu_l(exe_stage_rf_w_src_mem_h_alu_l),
     .alu_src_reg_h_imm_low(exe_stage_alu_src_reg_h_imm_low),
     .rf_wr_en(exe_stage_rf_wr_en),
+    .is_uncond_jmp(exe_stage_is_uncond_jmp),
+    .operand_a_is_from_pc(exe_stage_operand_a_is_from_pc),
+    .jmp_src_reg_h_imm_l(exe_stage_jmp_src_reg_h_imm_l),
     .pc(exe_stage_pc),
     .sel_cnt(exe_stage_sel_cnt),
     .rf_rdata_a(exe_stage_rf_rdata_a),
@@ -706,9 +732,8 @@ ID_to_EXE_regs #(
 );
 
 wire [1:0] exe_stage_forward_a;
-wire [1:0] exe_stage_forward_b;
 
-wire [DATA_WIDTH-1:0] exe_stage_operand_a;
+wire [DATA_WIDTH-1:0] operand_a_from_reg;
 
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
@@ -717,8 +742,21 @@ exe_forward_operand_mux #(
     .wb_stage_wr_rf_data_i(wb_stage_wr_rf_data),
     .exe_to_mem_alu_result_i(mem_stage_alu_result),
     .forward_ctrl_i(exe_stage_forward_a),
+    .operand_o(operand_a_from_reg)
+);
+
+wire [DATA_WIDTH-1:0] exe_stage_operand_a;
+
+auipc_mux #(
+    .DATA_WIDTH(DATA_WIDTH)
+) auipc_mux_inst (
+    .pc_operand_i(exe_stage_pc),
+    .reg_operand_i(operand_a_from_reg),
+    .operand_is_from_pc_ctrl_i(exe_stage_operand_a_is_from_pc),
     .operand_o(exe_stage_operand_a)
 );
+
+wire [1:0] exe_stage_forward_b;
 
 wire [DATA_WIDTH-1:0] exe_stage_non_imm_operand_b;
 
@@ -755,10 +793,34 @@ ALU #(
     .alu_result(exe_stage_alu_result)
 );
 
+jmp_src_mux #(
+    .ADDR_WIDTH(ADDR_WIDTH)
+) jmp_src_mux_inst (
+    .direct_jmp_dest_i(direct_jmp_dest),
+    .indirect_jmp_dest_i(exe_stage_alu_result),
+    .is_indirect_jmp_ctrl_i(exe_stage_jmp_src_reg_h_imm_l),
+    .jmp_dest(branch_pc)
+);
+
 branch_taker branch_taker_inst (
     .is_branch_i(exe_stage_is_branch_type),
     .alu_branch_result_i(exe_stage_alu_result),
+    .is_uncond_jmp_i(exe_stage_is_uncond_jmp),
     .take_branch_o(pc_is_from_branch)
+);
+
+wire [DATA_WIDTH-1:0] exe_stage_final_alu_result;
+wire [ADDR_WIDTH-1:0] link_addr;
+assign link_addr = 'd4 + exe_stage_pc;
+
+link_mux #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDR_WIDTH(ADDR_WIDTH)
+) link_mux_inst (
+    .link_addr_i(link_addr),
+    .alu_result_i(exe_stage_alu_result),
+    .is_uncond_jmp_ctrl_i(exe_stage_is_uncond_jmp),
+    .final_result_o(exe_stage_final_alu_result)
 );
 
 wire mem_stage_rf_wr_en;
@@ -793,7 +855,7 @@ EXE_to_MEM_regs #(
     .rf_w_src_mem_h_alu_l_i(exe_stage_rf_w_src_mem_h_alu_l),
     .rf_wr_en_i(exe_stage_rf_wr_en),
     .sel_cnt_i(exe_stage_sel_cnt),
-    .alu_result_i(exe_stage_alu_result),
+    .alu_result_i(exe_stage_final_alu_result),
     .non_imm_operand_b_i(exe_stage_non_imm_operand_b),
     .rf_waddr_i(exe_stage_rf_waddr),
 

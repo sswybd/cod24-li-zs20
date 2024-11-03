@@ -17,6 +17,9 @@ module ID_to_EXE_regs #(
     input wire rf_w_src_mem_h_alu_l_i,
     input wire alu_src_reg_h_imm_low_i,
     input wire rf_wr_en_i,
+    input wire is_uncond_jmp_i,
+    input wire operand_a_is_from_pc_i,
+    input wire jmp_src_reg_h_imm_l_i,
 
     input wire [ADDR_WIDTH-1:0] pc_i,
 
@@ -36,6 +39,9 @@ module ID_to_EXE_regs #(
     output logic rf_w_src_mem_h_alu_l,
     output logic alu_src_reg_h_imm_low,
     output logic rf_wr_en,
+    output logic is_uncond_jmp,
+    output logic operand_a_is_from_pc,
+    output logic jmp_src_reg_h_imm_l,
 
     output logic [ADDR_WIDTH-1:0] pc,
 
@@ -55,6 +61,9 @@ module ID_to_EXE_regs #(
     `simple_reg(rf_w_src_mem_h_alu_l, rf_w_src_mem_h_alu_l_i);
     `simple_reg(alu_src_reg_h_imm_low, alu_src_reg_h_imm_low_i);
     `simple_reg(rf_wr_en, rf_wr_en_i);
+    `simple_reg(is_uncond_jmp, is_uncond_jmp_i);
+    `simple_reg(operand_a_is_from_pc, operand_a_is_from_pc_i);
+    `simple_reg(jmp_src_reg_h_imm_l, jmp_src_reg_h_imm_l_i);
 
     `simple_reg(pc, pc_i);
 

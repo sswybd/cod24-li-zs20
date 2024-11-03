@@ -33,7 +33,7 @@
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSANumComputeUnits" Val="16"/>
     <Option Name="WTXSimLaunchSim" Val="158"/>
-    <Option Name="WTModelSimLaunchSim" Val="33"/>
+    <Option Name="WTModelSimLaunchSim" Val="36"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
     <Option Name="WTVcsLaunchSim" Val="0"/>
@@ -394,6 +394,27 @@
         </FileInfo>
       </File>
       <File Path="$PSRCDIR/sources_1/new/simple_wb_arbiter_2.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/MUX/link_mux.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/MUX/jmp_src_mux.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/MUX/auipc_mux.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
