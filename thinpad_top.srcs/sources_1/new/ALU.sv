@@ -26,3 +26,8 @@ assign alu_result =
                ({DATA_WIDTH{alu_op == 'd10}} & ((operand_a ^ operand_b) == {DATA_WIDTH{1'b0}}));
 
 endmodule
+
+// can also write the `alu_op == 'd10` line like this:
+// `({DATA_WIDTH{alu_op == 'd10}} & {DATA_WIDTH{~(|(operand_a ^ operand_b))}})`
+// but we must add the latter `DATA_WIDTH` concatenation part
+// if we used `(~(|(operand_a ^ operand_b)))` directly, the result would be incorrect (unwanted behaviour, compiler's magic), too
