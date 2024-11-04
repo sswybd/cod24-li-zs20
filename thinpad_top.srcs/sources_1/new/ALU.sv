@@ -23,6 +23,6 @@ assign alu_result =
                ({DATA_WIDTH{alu_op == 'd9}}  &  sra_val) |
                ({DATA_WIDTH{alu_op == 'd11}} &  operand_a) |  // output `operand_a`
                ({DATA_WIDTH{alu_op == 'd12}} &  operand_b) |  // output `operand_b`
-               ({DATA_WIDTH{alu_op == 'd10}} & (operand_a ~^ operand_b));
+               ({DATA_WIDTH{alu_op == 'd10}} & ((operand_a ^ operand_b) == {DATA_WIDTH{1'b0}}));
 
 endmodule
