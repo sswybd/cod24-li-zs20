@@ -71,6 +71,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           (funct3 == 3'b101) && (funct7 == 7'b0000000)) ? 'd8 :  // srl
                           is_ctz ? 'd13 :  // ctz
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0100000)) ? 'd14 :  // xnor
+                          ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b001) && (funct7 == 7'b0100100)) ? 'd15 :  // sbclr
                           'd0;
 
 always_comb begin
