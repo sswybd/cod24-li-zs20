@@ -3,7 +3,7 @@
 module ID_to_EXE_regs #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32,
-    parameter ALU_OP_ENCODING_WIDTH = 4,
+    parameter ALU_OP_ENCODING_WIDTH = 5,
     parameter REG_ADDR_WIDTH = 5
 ) (
     input wire sys_clk,

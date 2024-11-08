@@ -116,7 +116,7 @@ parameter DATA_WIDTH = 32;
 parameter INSTR_WIDTH = 32;
 parameter SELECT_WIDTH = (DATA_WIDTH / 8);
 parameter REG_ADDR_WIDTH = 5;
-parameter ALU_OP_ENCODING_WIDTH = 4;
+parameter ALU_OP_ENCODING_WIDTH = 5;
 parameter [INSTR_WIDTH-1:0] NOP = 'h00000013;
 
 wire bus_is_busy;
