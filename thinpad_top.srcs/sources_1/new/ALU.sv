@@ -44,10 +44,13 @@ assign alu_result =
                ({DATA_WIDTH{alu_op == 'd10}} & ((operand_a ^ operand_b) == {DATA_WIDTH{1'b0}})) |
                ({DATA_WIDTH{alu_op == 'd13}} &  ctz_result) |  // ctz
                ({DATA_WIDTH{alu_op == 'd14}} & (operand_a ~^ operand_b)) |
-               ({DATA_WIDTH{alu_op == 'd15}} & (operand_a & (~('d1 << (operand_b & {DATA_WIDTH{1'b1}})))))  // sbclr
+               ({DATA_WIDTH{alu_op == 'd15}} & 
+                (operand_a & 
+                    (~('d1 << (operand_b & {(DATA_WIDTH-SHIFT_RANGE){1'b0}, SHIFT_RANGE{1'b1}}))))
+               )  // sbclr
                 
                 ;
-                
+
 endmodule
 
 // can also write the `alu_op == 'd10` line like this:
