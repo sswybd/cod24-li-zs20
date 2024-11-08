@@ -56,9 +56,11 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           ((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)
                         || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) && (funct3 == 3'b000))
                         || (opcode_segment == AUIPC_OPCODE) || (opcode_segment == JALR_OPCODE)) ? 'd1 :       // add
-                          (((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000))
-                        || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
-                          (funct3 == 3'b100))) ? 'd5 :                     // xor
+                          (
+                           ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000)) ||
+                           ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b100)) ||
+                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0000000))
+                          ) ? 'd5 :  // xor
                           ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 == 3'b111)) ? 'd3 :  // and
                           ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b001)) ? 'd10 :  // xnor
                           (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
@@ -68,6 +70,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) &&
                           (funct3 == 3'b101) && (funct7 == 7'b0000000)) ? 'd8 :  // srl
                           is_ctz ? 'd13 :  // ctz
+                          ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0100000)) ? 'd14 :  // xnor
                           'd0;
 
 always_comb begin
