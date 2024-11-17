@@ -32,6 +32,9 @@ module ID_to_EXE_regs #(
     input wire [REG_ADDR_WIDTH-1:0] rf_waddr_i,
     input wire [REG_ADDR_WIDTH-1:0] rf_raddr_a_i,
     input wire [REG_ADDR_WIDTH-1:0] rf_raddr_b_i,
+    input wire [1:0] csr_write_type_i,
+    input wire csr_rf_wb_en_i,
+    input wire [REG_ADDR_WIDTH-1:0] csr_rd_addr_i,
     
     output logic mem_rd_en,
     output logic mem_wr_en,
@@ -53,7 +56,10 @@ module ID_to_EXE_regs #(
     output logic [ALU_OP_ENCODING_WIDTH-1:0] alu_op,
     output logic [REG_ADDR_WIDTH-1:0] rf_waddr,
     output logic [REG_ADDR_WIDTH-1:0] rf_raddr_a,
-    output logic [REG_ADDR_WIDTH-1:0] rf_raddr_b
+    output logic [REG_ADDR_WIDTH-1:0] rf_raddr_b,
+    output logic [1:0] csr_write_type,
+    output logic csr_rf_wb_en,
+    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr
 );
     `simple_reg(mem_rd_en, mem_rd_en_i);
     `simple_reg(mem_wr_en, mem_wr_en_i);
@@ -76,4 +82,7 @@ module ID_to_EXE_regs #(
     `simple_reg(rf_waddr, rf_waddr_i);
     `simple_reg(rf_raddr_a, rf_raddr_a_i);
     `simple_reg(rf_raddr_b, rf_raddr_b_i);
+    `simple_reg(csr_write_type, csr_write_type_i);
+    `simple_reg(csr_rf_wb_en, csr_rf_wb_en_i);
+    `simple_reg(csr_rd_addr, csr_rd_addr_i);
 endmodule
