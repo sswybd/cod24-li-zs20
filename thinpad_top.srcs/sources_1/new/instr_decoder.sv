@@ -12,7 +12,8 @@ module instr_decoder #(
     localparam LOAD_TYPE_OPCODE = 5'b00000,
     localparam J_TYPE_OPCODE = 5'b11011,  // only JAL is of J-type
     localparam AUIPC_OPCODE = 5'b00101,
-    localparam JALR_OPCODE = 5'b11001
+    localparam JALR_OPCODE = 5'b11001,
+    localparam SYSTEM_OPCODE = 5'b11100
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
 
