@@ -3,6 +3,7 @@ module instr_decoder #(
     parameter DATA_WIDTH = 32,
     parameter REG_ADDR_WIDTH = 5,
     parameter ALU_OP_ENCODING_WIDTH = 5,
+    parameter CSR_ADDR_WIDTH = 12,
 
     localparam LUI_OPCODE = 5'b01101,
     localparam B_TYPE_OPCODE = 5'b11000,
@@ -29,6 +30,7 @@ module instr_decoder #(
     output wire decoded_jmp_src_reg_h_imm_l_o,
     output wire [1:0] decodede_csr_write_type_o,  // 00: nop, 01: clear, 10: set, 11: normal write to csr
     output wire decoded_csr_rf_wb_en_o,  // whether write back the data read from csr to rf
+    output wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr_o,
 
     // signal outputs that absolutely (for now) don't need to bubblify
     output wire [1:0] decoded_sel_cnt_o,  // 2'd0 means lw/sw; 2'd1 means lb/wb; 2'd2 means lh/sw; 2'd3 means nill
@@ -131,6 +133,9 @@ assign decoded_sel_cnt_o = (((opcode_segment == S_TYPE_OPCODE) || (opcode_segmen
                          && (funct3 == 3'b001)) ? 'd2 :  // half word
                         (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
                          && (funct3 == 3'b010)) ? 'd0 : 'd0;   // word
+
+assign decoded_csr_addr_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000)) ?
+                            instr_i[31:20] : 'd0;
 
 assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) && (decoded_csr_rd_addr_o != 'd0));
 

@@ -1,4 +1,6 @@
-module id_stage_bubblify_unit (
+module id_stage_bubblify_unit #(
+    parameter CSR_ADDR_WIDTH = 12
+) (
     input wire mem_rd_en_i,
     input wire mem_wr_en_i,
     input wire is_branch_type_i,
@@ -10,6 +12,7 @@ module id_stage_bubblify_unit (
     input wire jmp_src_reg_h_imm_l_i,
     input wire [1:0] csr_write_type_i,
     input wire csr_rf_wb_en_i,
+    input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
 
     input wire id_stage_into_bubble_i,
 
@@ -23,7 +26,8 @@ module id_stage_bubblify_unit (
     output wire operand_a_is_from_pc_o,
     output wire jmp_src_reg_h_imm_l_o,
     output wire [1:0] csr_write_type_o,
-    output wire csr_rf_wb_en_o
+    output wire csr_rf_wb_en_o,
+    output wire [CSR_ADDR_WIDTH-1:0] csr_addr_o
 );
 
 assign mem_rd_en_o = id_stage_into_bubble_i ? 1'd0 : mem_rd_en_i;
@@ -37,5 +41,6 @@ assign operand_a_is_from_pc_o = id_stage_into_bubble_i ? 1'd0 : operand_a_is_fro
 assign jmp_src_reg_h_imm_l_o = id_stage_into_bubble_i ? 1'd0 : jmp_src_reg_h_imm_l_i;
 assign csr_write_type_o = id_stage_into_bubble_i ? 2'b00 : csr_write_type_i;
 assign csr_rf_wb_en_o = id_stage_into_bubble_i ? 1'd0 : csr_rf_wb_en_i;
+assign csr_addr_o = id_stage_into_bubble_i ? 1'd0 : csr_addr_i;
 
 endmodule

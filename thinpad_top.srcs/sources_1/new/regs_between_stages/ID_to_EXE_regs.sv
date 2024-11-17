@@ -4,7 +4,8 @@ module ID_to_EXE_regs #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32,
     parameter ALU_OP_ENCODING_WIDTH = 5,
-    parameter REG_ADDR_WIDTH = 5
+    parameter REG_ADDR_WIDTH = 5,
+    parameter CSR_ADDR_WIDTH = 12
 ) (
     input wire sys_clk,
     input wire sys_rst,
@@ -35,6 +36,7 @@ module ID_to_EXE_regs #(
     input wire [1:0] csr_write_type_i,
     input wire csr_rf_wb_en_i,
     input wire [REG_ADDR_WIDTH-1:0] csr_rd_addr_i,
+    input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
     
     output logic mem_rd_en,
     output logic mem_wr_en,
@@ -59,30 +61,34 @@ module ID_to_EXE_regs #(
     output logic [REG_ADDR_WIDTH-1:0] rf_raddr_b,
     output logic [1:0] csr_write_type,
     output logic csr_rf_wb_en,
-    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr
+    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr,
+    output logic [CSR_ADDR_WIDTH-1:0] csr_addr
 );
-    `simple_reg(mem_rd_en, mem_rd_en_i);
-    `simple_reg(mem_wr_en, mem_wr_en_i);
-    `simple_reg(is_branch_type, is_branch_type_i);
-    `simple_reg(rf_w_src_mem_h_alu_l, rf_w_src_mem_h_alu_l_i);
-    `simple_reg(alu_src_reg_h_imm_low, alu_src_reg_h_imm_low_i);
-    `simple_reg(rf_wr_en, rf_wr_en_i);
-    `simple_reg(is_uncond_jmp, is_uncond_jmp_i);
-    `simple_reg(operand_a_is_from_pc, operand_a_is_from_pc_i);
-    `simple_reg(jmp_src_reg_h_imm_l, jmp_src_reg_h_imm_l_i);
 
-    `simple_reg(pc, pc_i);
+`simple_reg(mem_rd_en, mem_rd_en_i);
+`simple_reg(mem_wr_en, mem_wr_en_i);
+`simple_reg(is_branch_type, is_branch_type_i);
+`simple_reg(rf_w_src_mem_h_alu_l, rf_w_src_mem_h_alu_l_i);
+`simple_reg(alu_src_reg_h_imm_low, alu_src_reg_h_imm_low_i);
+`simple_reg(rf_wr_en, rf_wr_en_i);
+`simple_reg(is_uncond_jmp, is_uncond_jmp_i);
+`simple_reg(operand_a_is_from_pc, operand_a_is_from_pc_i);
+`simple_reg(jmp_src_reg_h_imm_l, jmp_src_reg_h_imm_l_i);
 
-    `simple_reg(sel_cnt, sel_cnt_i);
+`simple_reg(pc, pc_i);
 
-    `simple_reg(rf_rdata_a, rf_rdata_a_i);
-    `simple_reg(rf_rdata_b, rf_rdata_b_i);
-    `simple_reg(imm, imm_i);
-    `simple_reg(alu_op, alu_op_i);
-    `simple_reg(rf_waddr, rf_waddr_i);
-    `simple_reg(rf_raddr_a, rf_raddr_a_i);
-    `simple_reg(rf_raddr_b, rf_raddr_b_i);
-    `simple_reg(csr_write_type, csr_write_type_i);
-    `simple_reg(csr_rf_wb_en, csr_rf_wb_en_i);
-    `simple_reg(csr_rd_addr, csr_rd_addr_i);
+`simple_reg(sel_cnt, sel_cnt_i);
+
+`simple_reg(rf_rdata_a, rf_rdata_a_i);
+`simple_reg(rf_rdata_b, rf_rdata_b_i);
+`simple_reg(imm, imm_i);
+`simple_reg(alu_op, alu_op_i);
+`simple_reg(rf_waddr, rf_waddr_i);
+`simple_reg(rf_raddr_a, rf_raddr_a_i);
+`simple_reg(rf_raddr_b, rf_raddr_b_i);
+`simple_reg(csr_write_type, csr_write_type_i);
+`simple_reg(csr_rf_wb_en, csr_rf_wb_en_i);
+`simple_reg(csr_rd_addr, csr_rd_addr_i);
+`simple_reg(csr_addr, csr_addr_i);
+
 endmodule

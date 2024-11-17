@@ -596,12 +596,14 @@ wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr;
 wire [1:0] decodede_csr_write_type;
 wire decoded_csr_rf_wb_en;
 wire [REG_ADDR_WIDTH-1:0] decoded_csr_rd_addr;
+wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr;
 
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
+    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) instr_decoder_inst (
     // input instruction
     .instr_i(id_stage_instr),
@@ -617,6 +619,7 @@ instr_decoder #(
     .decoded_jmp_src_reg_h_imm_l_o(decoded_jmp_src_reg_h_imm_l),
     .decodede_csr_write_type_o(decodede_csr_write_type),
     .decoded_csr_rf_wb_en_o(decoded_csr_rf_wb_en),
+    .decoded_csr_addr_o(decoded_csr_addr),
 
     .decoded_sel_cnt_o(decoded_sel_cnt),
     .decoded_rf_raddr_a_o(decoded_rf_raddr_a),
@@ -665,8 +668,11 @@ wire id_stage_operand_a_is_from_pc;
 wire id_stage_jmp_src_reg_h_imm_l;
 wire [1:0] id_stage_csr_write_type;
 wire id_stage_csr_rf_wb_en;
+wire [CSR_ADDR_WIDTH-1:0] id_stage_csr_addr;
 
-id_stage_bubblify_unit id_stage_bubblify_unit_inst (
+id_stage_bubblify_unit #(
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
+) id_stage_bubblify_unit_inst (
     .mem_rd_en_i(decoded_mem_rd_en),
     .mem_wr_en_i(decoded_mem_wr_en),
     .is_branch_type_i(decoded_is_branch_type),
@@ -678,6 +684,7 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .jmp_src_reg_h_imm_l_i(decoded_jmp_src_reg_h_imm_l),
     .csr_write_type_i(decodede_csr_write_type),
     .csr_rf_wb_en_i(decoded_csr_rf_wb_en),
+    .csr_addr_i(decoded_csr_addr),
 
     .id_stage_into_bubble_i(id_stage_into_bubble),
 
@@ -691,7 +698,8 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .operand_a_is_from_pc_o(id_stage_operand_a_is_from_pc),
     .jmp_src_reg_h_imm_l_o(id_stage_jmp_src_reg_h_imm_l),
     .csr_write_type_o(id_stage_csr_write_type),
-    .csr_rf_wb_en_o(id_stage_csr_rf_wb_en)
+    .csr_rf_wb_en_o(id_stage_csr_rf_wb_en),
+    .csr_addr_o(id_stage_csr_addr)
 );
 
 wire exe_stage_mem_rd_en;
@@ -715,6 +723,7 @@ wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
 wire [1:0] exe_stage_csr_write_type;
 wire exe_stage_csr_rf_wb_en;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_csr_rd_addr;
+wire [CSR_ADDR_WIDTH-1:0] exe_stage_csr_addr;
 
 wire [ADDR_WIDTH-1:0] direct_jmp_dest;
 assign direct_jmp_dest = exe_stage_pc + exe_stage_imm;
@@ -736,7 +745,8 @@ ID_to_EXE_regs #(
     .ADDR_WIDTH(ADDR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
-    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) ID_to_EXE_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -763,6 +773,7 @@ ID_to_EXE_regs #(
     .csr_write_type_i(id_stage_csr_write_type),
     .csr_rf_wb_en_i(id_stage_csr_rf_wb_en),
     .csr_rd_addr_i(decoded_csr_rd_addr),
+    .csr_addr_i(id_stage_csr_addr),
 
     .mem_rd_en(exe_stage_mem_rd_en),
     .mem_wr_en(exe_stage_mem_wr_en),
@@ -784,7 +795,8 @@ ID_to_EXE_regs #(
     .rf_raddr_b(exe_stage_rf_raddr_b),
     .csr_write_type(exe_stage_csr_write_type),
     .csr_rf_wb_en(exe_stage_csr_rf_wb_en),
-    .csr_rd_addr(exe_stage_csr_rd_addr)
+    .csr_rd_addr(exe_stage_csr_rd_addr),
+    .csr_addr(exe_stage_csr_addr)
 );
 
 wire [1:0] exe_stage_forward_a;
@@ -906,10 +918,12 @@ exe_forwarding_unit #(
 wire [1:0] mem_stage_sel_cnt;
 wire [DATA_WIDTH-1:0] mem_stage_csr_rs1_data;
 wire [1:0] mem_stage_csr_write_type;  // 00: nop, 01: clear, 10: set, 11: normal write to csr
+wire [CSR_ADDR_WIDTH-1:0] mem_stage_csr_addr;
 
 EXE_to_MEM_regs #(
     .DATA_WIDTH(DATA_WIDTH),
-    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) EXE_to_MEM_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -927,6 +941,7 @@ EXE_to_MEM_regs #(
     .csr_write_type_i(exe_stage_csr_write_type),
     .csr_rf_wb_en_i(exe_stage_csr_rf_wb_en),
     .csr_rd_addr_i(exe_stage_csr_rd_addr),
+    .csr_addr_i(exe_stage_csr_addr),
 
     .mem_rd_en(mem_stage_mem_rd_en),
     .mem_wr_en(mem_stage_mem_wr_en),
@@ -939,7 +954,8 @@ EXE_to_MEM_regs #(
     .csr_rs1_data(mem_stage_csr_rs1_data),
     .csr_write_type(mem_stage_csr_write_type),
     .csr_rf_wb_en(mem_stage_csr_rf_wb_en),
-    .csr_rd_addr(mem_stage_csr_rd_addr)
+    .csr_rd_addr(mem_stage_csr_rd_addr),
+    .csr_addr(mem_stage_csr_addr)
 );
 
 logic [DATA_WIDTH-1:0] mtvec_csr;
@@ -949,8 +965,6 @@ logic [DATA_WIDTH-1:0] mcause_csr;
 logic [DATA_WIDTH-1:0] mstatus_csr;
 logic [DATA_WIDTH-1:0] mie_csr;
 logic [DATA_WIDTH-1:0] mip_csr;
-
-wire [CSR_ADDR_WIDTH-1:0] mem_stage_csr_addr;
 
 assign mem_stage_csr_rd_data = 
        {DATA_WIDTH{mem_stage_csr_rf_wb_en}} &

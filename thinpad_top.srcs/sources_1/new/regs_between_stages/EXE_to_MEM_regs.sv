@@ -2,7 +2,8 @@
 
 module EXE_to_MEM_regs #(
     parameter DATA_WIDTH = 32,
-    parameter REG_ADDR_WIDTH = 5
+    parameter REG_ADDR_WIDTH = 5,
+    parameter CSR_ADDR_WIDTH = 12
 ) (
     input wire sys_clk,
     input wire sys_rst,
@@ -20,6 +21,7 @@ module EXE_to_MEM_regs #(
     input wire [1:0] csr_write_type_i,
     input wire csr_rf_wb_en_i,
     input wire [REG_ADDR_WIDTH-1:0] csr_rd_addr_i,
+    input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
 
     output logic mem_rd_en,
     output logic mem_wr_en,
@@ -32,7 +34,8 @@ module EXE_to_MEM_regs #(
     output logic [DATA_WIDTH-1:0] csr_rs1_data,
     output logic [1:0] csr_write_type,
     output logic csr_rf_wb_en,
-    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr
+    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr,
+    output logic [CSR_ADDR_WIDTH-1:0] csr_addr
 );
 
 `simple_reg(mem_rd_en, mem_rd_en_i);
@@ -47,5 +50,6 @@ module EXE_to_MEM_regs #(
 `simple_reg(csr_write_type, csr_write_type_i);
 `simple_reg(csr_rf_wb_en, csr_rf_wb_en_i);
 `simple_reg(csr_rd_addr, csr_rd_addr_i);
+`simple_reg(csr_addr, csr_addr_i);
 
 endmodule
