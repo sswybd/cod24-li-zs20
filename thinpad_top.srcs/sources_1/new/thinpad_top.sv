@@ -118,6 +118,15 @@ parameter SELECT_WIDTH = (DATA_WIDTH / 8);
 parameter REG_ADDR_WIDTH = 5;
 parameter ALU_OP_ENCODING_WIDTH = 5;
 parameter [INSTR_WIDTH-1:0] NOP = 'h00000013;
+parameter CSR_ADDR_WIDTH = 12;
+
+localparam MTVEC_CSR_ADDR = 12'h305;
+localparam MSCRATCH_CSR_ADDR = 12'h340;
+localparam MEPC_CSR_ADDR = 12'h341;
+localparam MCAUSE_CSR_ADDR = 12'h342;
+localparam MSTATUS_CSR_ADDR = 12'h300;
+localparam MIE_CSR_ADDR = 12'h304;
+localparam MIP_CSR_ADDR = 12'h344;
 
 wire bus_is_busy;
 wire [ADDR_WIDTH-1:0] if_stage_pc;
@@ -532,6 +541,30 @@ wire wb_stage_rf_wr_en;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
+wire mem_stage_csr_rf_wb_en;  // should be true if it's a csr instr and the rd field is not x0
+wire [REG_ADDR_WIDTH-1:0] mem_stage_csr_rd_addr;  // `rd` field (like `rs1`), not "read"
+wire [DATA_WIDTH-1:0] mem_stage_csr_rd_data;
+
+
+/* =========== register file write back control begin =========== */
+
+// This control is based on that MEM and WB cannot be simultaneous, because memory access is multi-cycle.
+// If we improve the performance of memory access, such as by implementing cache, this whole structure needs
+// to change, and MEM stage forwarding may also be necessary.
+// And there should be no priority between `mem_stage_csr_rf_wb_en` and `wb_stage_rf_wr_en` .
+wire rf_wb_en;
+wire [REG_ADDR_WIDTH-1:0] rf_wb_addr;
+wire [DATA_WIDTH-1:0] rf_wb_data;
+
+assign rf_wb_en = wb_stage_rf_wr_en | mem_stage_csr_rf_wb_en;
+assign rf_wb_addr = mem_stage_csr_rf_wb_en ? mem_stage_csr_rd_addr :
+                    wb_stage_rf_wr_en   ? wb_stage_rf_waddr     : 'd0;
+assign rf_wb_data = mem_stage_csr_rf_wb_en ? mem_stage_csr_rd_data :
+                    wb_stage_rf_wr_en   ? wb_stage_wr_rf_data   : 'd0;
+
+/* =========== register file write back control end =========== */
+
+
 register_file #(
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
@@ -542,9 +575,9 @@ register_file #(
     .rf_rdata_a(raw_rf_rdata_a),
     .rf_raddr_b(decoded_rf_raddr_b),
     .rf_rdata_b(raw_rf_rdata_b),
-    .rf_waddr(wb_stage_rf_waddr),
-    .rf_wdata(wb_stage_wr_rf_data),
-    .rf_we(wb_stage_rf_wr_en)
+    .rf_waddr(rf_wb_addr),
+    .rf_wdata(rf_wb_data),
+    .rf_we(rf_wb_en)
 );
 
 wire decoded_mem_rd_en;
@@ -560,17 +593,21 @@ wire [1:0] decoded_sel_cnt;
 wire [DATA_WIDTH-1:0] decoded_imm;
 wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr;
+wire [1:0] decodede_csr_write_type;
+wire decoded_csr_rf_wb_en;
+wire [REG_ADDR_WIDTH-1:0] decoded_csr_rd_addr;
+wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr;
 
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH)
+    .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) instr_decoder_inst (
     // input instruction
     .instr_i(id_stage_instr),
 
-    // pure control signal outputs
     .decoded_mem_rd_en_o(decoded_mem_rd_en),
     .decoded_mem_wr_en_o(decoded_mem_wr_en),
     .decoded_is_branch_type_o(decoded_is_branch_type),
@@ -580,18 +617,21 @@ instr_decoder #(
     .decoded_is_uncond_jmp_o(decoded_is_uncond_jmp),
     .decoded_operand_a_is_from_pc_o(decoded_operand_a_is_from_pc),
     .decoded_jmp_src_reg_h_imm_l_o(decoded_jmp_src_reg_h_imm_l),
+    .decodede_csr_write_type_o(decodede_csr_write_type),
+    .decoded_csr_rf_wb_en_o(decoded_csr_rf_wb_en),
+    .decoded_csr_addr_o(decoded_csr_addr),
 
-    // other output signals with more concrete meaning
     .decoded_sel_cnt_o(decoded_sel_cnt),
     .decoded_rf_raddr_a_o(decoded_rf_raddr_a),
     .decoded_rf_raddr_b_o(decoded_rf_raddr_b),
     .decoded_imm_o(decoded_imm),
     .decoded_alu_op_o(decoded_alu_op),
-    .decoded_rf_waddr_o(decoded_rf_waddr)
+    .decoded_rf_waddr_o(decoded_rf_waddr),
+    .decoded_csr_rd_addr_o(decoded_csr_rd_addr)
 );
 
-wire id_stage_forward_a;
-wire id_stage_forward_b;
+wire [1:0] id_stage_forward_a;
+wire [1:0] id_stage_forward_b;
 
 wire [DATA_WIDTH-1:0] id_stage_rf_rdata_a;
 
@@ -600,6 +640,7 @@ id_forward_rf_rdata_mux #(
 ) id_forward_a_mux_inst (
     .rf_rdata_i(raw_rf_rdata_a),
     .wr_rf_data_i(wb_stage_wr_rf_data),
+    .csr_wb_data_i(mem_stage_csr_rd_data),
     .forward_ctrl_i(id_stage_forward_a),
     .rf_rdata_o(id_stage_rf_rdata_a)
 );
@@ -611,6 +652,7 @@ id_forward_rf_rdata_mux #(
 ) id_forward_b_mux_inst (
     .rf_rdata_i(raw_rf_rdata_b),
     .wr_rf_data_i(wb_stage_wr_rf_data),
+    .csr_wb_data_i(mem_stage_csr_rd_data),
     .forward_ctrl_i(id_stage_forward_b),
     .rf_rdata_o(id_stage_rf_rdata_b)
 );
@@ -624,8 +666,13 @@ wire id_stage_rf_wr_en_o;
 wire id_stage_is_uncond_jmp;
 wire id_stage_operand_a_is_from_pc;
 wire id_stage_jmp_src_reg_h_imm_l;
+wire [1:0] id_stage_csr_write_type;
+wire id_stage_csr_rf_wb_en;
+wire [CSR_ADDR_WIDTH-1:0] id_stage_csr_addr;
 
-id_stage_bubblify_unit id_stage_bubblify_unit_inst (
+id_stage_bubblify_unit #(
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
+) id_stage_bubblify_unit_inst (
     .mem_rd_en_i(decoded_mem_rd_en),
     .mem_wr_en_i(decoded_mem_wr_en),
     .is_branch_type_i(decoded_is_branch_type),
@@ -635,6 +682,9 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .is_uncond_jmp_i(decoded_is_uncond_jmp),
     .operand_a_is_from_pc_i(decoded_operand_a_is_from_pc),
     .jmp_src_reg_h_imm_l_i(decoded_jmp_src_reg_h_imm_l),
+    .csr_write_type_i(decodede_csr_write_type),
+    .csr_rf_wb_en_i(decoded_csr_rf_wb_en),
+    .csr_addr_i(decoded_csr_addr),
 
     .id_stage_into_bubble_i(id_stage_into_bubble),
 
@@ -646,7 +696,10 @@ id_stage_bubblify_unit id_stage_bubblify_unit_inst (
     .rf_wr_en_o(id_stage_rf_wr_en_o),
     .is_uncond_jmp_o(id_stage_is_uncond_jmp),
     .operand_a_is_from_pc_o(id_stage_operand_a_is_from_pc),
-    .jmp_src_reg_h_imm_l_o(id_stage_jmp_src_reg_h_imm_l)
+    .jmp_src_reg_h_imm_l_o(id_stage_jmp_src_reg_h_imm_l),
+    .csr_write_type_o(id_stage_csr_write_type),
+    .csr_rf_wb_en_o(id_stage_csr_rf_wb_en),
+    .csr_addr_o(id_stage_csr_addr)
 );
 
 wire exe_stage_mem_rd_en;
@@ -667,6 +720,10 @@ wire [ALU_OP_ENCODING_WIDTH-1:0] exe_stage_alu_op;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_waddr;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
+wire [1:0] exe_stage_csr_write_type;
+wire exe_stage_csr_rf_wb_en;
+wire [REG_ADDR_WIDTH-1:0] exe_stage_csr_rd_addr;
+wire [CSR_ADDR_WIDTH-1:0] exe_stage_csr_addr;
 
 wire [ADDR_WIDTH-1:0] direct_jmp_dest;
 assign direct_jmp_dest = exe_stage_pc + exe_stage_imm;
@@ -678,15 +735,18 @@ id_forwarding_unit #(
     .wb_addr(wb_stage_rf_waddr),
     .rf_raddr_a(decoded_rf_raddr_a),
     .rf_raddr_b(decoded_rf_raddr_b),
-    .operand_a_should_forward(id_stage_forward_a),
-    .operand_b_should_forward(id_stage_forward_b)
+    .csr_wb_en_i(mem_stage_csr_rf_wb_en),
+    .csr_wb_addr_i(mem_stage_csr_rd_addr),
+    .forward_a_o(id_stage_forward_a),
+    .forward_b_o(id_stage_forward_b)
 );
 
 ID_to_EXE_regs #(
     .ADDR_WIDTH(ADDR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
-    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) ID_to_EXE_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -710,6 +770,10 @@ ID_to_EXE_regs #(
     .rf_waddr_i(decoded_rf_waddr),
     .rf_raddr_a_i(decoded_rf_raddr_a),
     .rf_raddr_b_i(decoded_rf_raddr_b),
+    .csr_write_type_i(id_stage_csr_write_type),
+    .csr_rf_wb_en_i(id_stage_csr_rf_wb_en),
+    .csr_rd_addr_i(decoded_csr_rd_addr),
+    .csr_addr_i(id_stage_csr_addr),
 
     .mem_rd_en(exe_stage_mem_rd_en),
     .mem_wr_en(exe_stage_mem_wr_en),
@@ -728,12 +792,18 @@ ID_to_EXE_regs #(
     .alu_op(exe_stage_alu_op),
     .rf_waddr(exe_stage_rf_waddr),
     .rf_raddr_a(exe_stage_rf_raddr_a),
-    .rf_raddr_b(exe_stage_rf_raddr_b)
+    .rf_raddr_b(exe_stage_rf_raddr_b),
+    .csr_write_type(exe_stage_csr_write_type),
+    .csr_rf_wb_en(exe_stage_csr_rf_wb_en),
+    .csr_rd_addr(exe_stage_csr_rd_addr),
+    .csr_addr(exe_stage_csr_addr)
 );
 
 wire [1:0] exe_stage_forward_a;
 
 wire [DATA_WIDTH-1:0] operand_a_from_reg;
+wire [DATA_WIDTH-1:0] exe_stage_csr_rs1_data;
+assign exe_stage_csr_rs1_data = operand_a_from_reg;
 
 exe_forward_operand_mux #(
     .DATA_WIDTH(DATA_WIDTH)
@@ -741,6 +811,7 @@ exe_forward_operand_mux #(
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_a),
     .wb_stage_wr_rf_data_i(wb_stage_wr_rf_data),
     .exe_to_mem_alu_result_i(mem_stage_alu_result),
+    .csr_wb_data_i(mem_stage_csr_rd_data),
     .forward_ctrl_i(exe_stage_forward_a),
     .operand_o(operand_a_from_reg)
 );
@@ -766,6 +837,7 @@ exe_forward_operand_mux #(
     .exe_stage_rf_rdata_i(exe_stage_rf_rdata_b),
     .wb_stage_wr_rf_data_i(wb_stage_wr_rf_data),
     .exe_to_mem_alu_result_i(mem_stage_alu_result),
+    .csr_wb_data_i(mem_stage_csr_rd_data),
     .forward_ctrl_i(exe_stage_forward_b),
     .operand_o(exe_stage_non_imm_operand_b)
 );
@@ -825,6 +897,7 @@ link_mux #(
 
 wire mem_stage_rf_wr_en;
 wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_waddr;
+wire mem_stage_rf_w_src_mem_h_alu_l;
 
 exe_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
@@ -835,16 +908,22 @@ exe_forwarding_unit #(
     .exe_stage_operand_b_rf_addr_i(exe_stage_rf_raddr_b),
     .exe_to_mem_rf_wr_addr_i(mem_stage_rf_waddr),
     .mem_to_wb_rf_wr_addr_i(wb_stage_rf_waddr),
+    .mem_stage_rf_w_src_mem_h_alu_l_i(mem_stage_rf_w_src_mem_h_alu_l),
+    .csr_wb_en_i(mem_stage_csr_rf_wb_en),
+    .csr_wb_addr_i(mem_stage_csr_rd_addr),
     .forward_a_o(exe_stage_forward_a),
     .forward_b_o(exe_stage_forward_b)
 );
 
-wire mem_stage_rf_w_src_mem_h_alu_l;
 wire [1:0] mem_stage_sel_cnt;
+wire [DATA_WIDTH-1:0] mem_stage_csr_rs1_data;
+wire [1:0] mem_stage_csr_write_type;  // 00: nop, 01: clear, 10: set, 11: normal write to csr
+wire [CSR_ADDR_WIDTH-1:0] mem_stage_csr_addr;
 
 EXE_to_MEM_regs #(
     .DATA_WIDTH(DATA_WIDTH),
-    .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
 ) EXE_to_MEM_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -858,6 +937,11 @@ EXE_to_MEM_regs #(
     .alu_result_i(exe_stage_final_alu_result),
     .non_imm_operand_b_i(exe_stage_non_imm_operand_b),
     .rf_waddr_i(exe_stage_rf_waddr),
+    .csr_rs1_data_i(exe_stage_csr_rs1_data),
+    .csr_write_type_i(exe_stage_csr_write_type),
+    .csr_rf_wb_en_i(exe_stage_csr_rf_wb_en),
+    .csr_rd_addr_i(exe_stage_csr_rd_addr),
+    .csr_addr_i(exe_stage_csr_addr),
 
     .mem_rd_en(mem_stage_mem_rd_en),
     .mem_wr_en(mem_stage_mem_wr_en),
@@ -866,8 +950,96 @@ EXE_to_MEM_regs #(
     .sel_cnt(mem_stage_sel_cnt),
     .alu_result(mem_stage_alu_result),
     .non_imm_operand_b(mem_stage_non_imm_operand_b),
-    .rf_waddr(mem_stage_rf_waddr)
+    .rf_waddr(mem_stage_rf_waddr),
+    .csr_rs1_data(mem_stage_csr_rs1_data),
+    .csr_write_type(mem_stage_csr_write_type),
+    .csr_rf_wb_en(mem_stage_csr_rf_wb_en),
+    .csr_rd_addr(mem_stage_csr_rd_addr),
+    .csr_addr(mem_stage_csr_addr)
 );
+
+logic [DATA_WIDTH-1:0] mtvec_csr;
+logic [DATA_WIDTH-1:0] mscratch_csr;
+logic [DATA_WIDTH-1:0] mepc_csr;
+logic [DATA_WIDTH-1:0] mcause_csr;
+logic [DATA_WIDTH-1:0] mstatus_csr;
+logic [DATA_WIDTH-1:0] mie_csr;
+logic [DATA_WIDTH-1:0] mip_csr;
+
+assign mem_stage_csr_rd_data = 
+       {DATA_WIDTH{mem_stage_csr_rf_wb_en}} &
+       (
+        ({DATA_WIDTH{mem_stage_csr_addr == MTVEC_CSR_ADDR   }} & mtvec_csr   ) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MSCRATCH_CSR_ADDR}} & mscratch_csr) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MEPC_CSR_ADDR    }} & mepc_csr    ) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MCAUSE_CSR_ADDR  }} & mcause_csr  ) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MSTATUS_CSR_ADDR }} & mstatus_csr ) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MIE_CSR_ADDR     }} & mie_csr     ) |
+        ({DATA_WIDTH{mem_stage_csr_addr == MIP_CSR_ADDR     }} & mip_csr     )
+       );
+
+logic [DATA_WIDTH-1:0] tmp_csr_intermediate_val;
+integer within_csr_tmp_val_index;
+always_comb begin : calc_csr_tmp_val_for_concise_always_ff_block
+    case (mem_stage_csr_addr)  // initialize for this combinational logic
+        MTVEC_CSR_ADDR    : tmp_csr_intermediate_val = mtvec_csr;
+        MSCRATCH_CSR_ADDR : tmp_csr_intermediate_val = mscratch_csr;
+        MEPC_CSR_ADDR     : tmp_csr_intermediate_val = mepc_csr;
+        MCAUSE_CSR_ADDR   : tmp_csr_intermediate_val = mcause_csr;
+        MSTATUS_CSR_ADDR  : tmp_csr_intermediate_val = mstatus_csr;
+        MIE_CSR_ADDR      : tmp_csr_intermediate_val = mie_csr;
+        MIP_CSR_ADDR      : tmp_csr_intermediate_val = mip_csr;
+        default           : tmp_csr_intermediate_val = 'd0;
+    endcase
+
+    if (mem_stage_csr_write_type == 'b00) begin
+    end
+    else if (mem_stage_csr_write_type == 'b01) begin  // clear
+        for (within_csr_tmp_val_index = 0; within_csr_tmp_val_index < DATA_WIDTH; within_csr_tmp_val_index = within_csr_tmp_val_index + 1) begin
+            if (mem_stage_csr_rs1_data[within_csr_tmp_val_index]) begin
+                tmp_csr_intermediate_val[within_csr_tmp_val_index] = 1'b0;
+            end
+            else begin
+            end
+        end
+    end
+    else if (mem_stage_csr_write_type == 'b10) begin  // set
+        for (within_csr_tmp_val_index = 0; within_csr_tmp_val_index < DATA_WIDTH; within_csr_tmp_val_index = within_csr_tmp_val_index + 1) begin
+            if (mem_stage_csr_rs1_data[within_csr_tmp_val_index]) begin
+                tmp_csr_intermediate_val[within_csr_tmp_val_index] = 1'b1;
+            end
+            else begin
+            end
+        end
+    end
+    else if (mem_stage_csr_write_type == 'b11) begin  // normal write
+        tmp_csr_intermediate_val = mem_stage_csr_rs1_data;
+    end
+end
+
+always_ff @(posedge sys_clk) begin : csr_instr_operation
+    if (sys_rst) begin
+        mtvec_csr <= 'd0;
+        mscratch_csr <= 'd0;
+        mepc_csr <= 'd0;
+        mcause_csr <= 'd0;
+        mstatus_csr <= 'd0;
+        mie_csr <= 'd0;
+        mip_csr <= 'd0;
+    end
+    else if (mem_stage_csr_write_type != 'b00) begin
+        case (mem_stage_csr_addr)
+            MTVEC_CSR_ADDR    : mtvec_csr    <= tmp_csr_intermediate_val;
+            MSCRATCH_CSR_ADDR : mscratch_csr <= tmp_csr_intermediate_val;
+            MEPC_CSR_ADDR     : mepc_csr     <= tmp_csr_intermediate_val;
+            MCAUSE_CSR_ADDR   : mcause_csr   <= tmp_csr_intermediate_val;
+            MSTATUS_CSR_ADDR  : mstatus_csr  <= tmp_csr_intermediate_val;
+            MIE_CSR_ADDR      : mie_csr      <= tmp_csr_intermediate_val;
+            MIP_CSR_ADDR      : mip_csr      <= tmp_csr_intermediate_val;
+            default           :                                         ;
+        endcase
+    end
+end
 
 wire [DATA_WIDTH-1:0] mem_stage_rd_mem_data;
 

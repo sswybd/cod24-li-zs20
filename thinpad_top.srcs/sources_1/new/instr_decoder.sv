@@ -3,6 +3,7 @@ module instr_decoder #(
     parameter DATA_WIDTH = 32,
     parameter REG_ADDR_WIDTH = 5,
     parameter ALU_OP_ENCODING_WIDTH = 5,
+    parameter CSR_ADDR_WIDTH = 12,
 
     localparam LUI_OPCODE = 5'b01101,
     localparam B_TYPE_OPCODE = 5'b11000,
@@ -12,11 +13,12 @@ module instr_decoder #(
     localparam LOAD_TYPE_OPCODE = 5'b00000,
     localparam J_TYPE_OPCODE = 5'b11011,  // only JAL is of J-type
     localparam AUIPC_OPCODE = 5'b00101,
-    localparam JALR_OPCODE = 5'b11001
+    localparam JALR_OPCODE = 5'b11001,
+    localparam SYSTEM_OPCODE = 5'b11100
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
 
-    // pure control signal outputs
+    // signal outputs that need (or it's better) to bubblify
     output wire decoded_mem_rd_en_o,
     output wire decoded_mem_wr_en_o,
     output wire decoded_is_branch_type_o,
@@ -26,13 +28,18 @@ module instr_decoder #(
     output wire decoded_is_uncond_jmp_o,
     output wire decoded_operand_a_is_from_pc_o,
     output wire decoded_jmp_src_reg_h_imm_l_o,
+    output wire [1:0] decodede_csr_write_type_o,  // 00: nop, 01: clear, 10: set, 11: normal write to csr
+    output wire decoded_csr_rf_wb_en_o,  // whether write back the data read from csr to rf
+    output wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr_o,
 
+    // signal outputs that absolutely (for now) don't need to bubblify
     output wire [1:0] decoded_sel_cnt_o,  // 2'd0 means lw/sw; 2'd1 means lb/wb; 2'd2 means lh/sw; 2'd3 means nill
     output wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a_o,
     output wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b_o,
     output logic [DATA_WIDTH-1:0] decoded_imm_o,
     output wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op_o,
-    output wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr_o
+    output wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr_o,
+    output wire [REG_ADDR_WIDTH-1:0] decoded_csr_rd_addr_o
 );
 
 wire [4:0] opcode_segment;
@@ -43,6 +50,8 @@ assign funct3 = instr_i[14:12];
 
 wire [6:0] funct7;
 assign funct7 = instr_i[31:25];
+
+assign decoded_csr_rd_addr_o = instr_i[11:7];
 
 // just in case, to ensure the destination reg is set to zero if not needed, 
 // maybe preventing possible and unwanted forwarding
@@ -74,7 +83,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b001) && (funct7 == 7'b0100100)) ? 'd15 :  // sbclr
                           'd0;
 
-always_comb begin
+always_comb begin : calc_imm
     decoded_imm_o = 'd0;
 
     if ((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) ||
@@ -124,6 +133,19 @@ assign decoded_sel_cnt_o = (((opcode_segment == S_TYPE_OPCODE) || (opcode_segmen
                          && (funct3 == 3'b001)) ? 'd2 :  // half word
                         (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
                          && (funct3 == 3'b010)) ? 'd0 : 'd0;   // word
+
+assign decoded_csr_addr_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000)) ?
+                            instr_i[31:20] : 'd0;
+
+assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) && (decoded_csr_rd_addr_o != 'd0));
+
+wire [1:0] funct3_lower_two_bits;
+assign funct3_lower_two_bits = funct3[1:0];
+
+assign decodede_csr_write_type_o = ((opcode_segment != SYSTEM_OPCODE) || (funct3 == 3'b000)) ? 2'b00 :
+                                   (funct3_lower_two_bits == 2'b01) ? 2'b11 :
+                                   (funct3_lower_two_bits == 2'b10) ? 2'b10 :
+                                   (funct3_lower_two_bits == 2'b11) ? 2'b01 : 2'b00;
 
 assign decoded_jmp_src_reg_h_imm_l_o = (opcode_segment == JALR_OPCODE);
 
