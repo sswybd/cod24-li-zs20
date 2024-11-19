@@ -119,6 +119,12 @@ parameter REG_ADDR_WIDTH = 5;
 parameter ALU_OP_ENCODING_WIDTH = 5;
 parameter [INSTR_WIDTH-1:0] NOP = 'h00000013;
 parameter CSR_ADDR_WIDTH = 12;
+parameter EXCEPTION_CODE_WIDTH = 31;
+parameter [ADDR_WIDTH-1:0] MTIME_L_ADDR    = 'h0200BFF8;
+parameter [ADDR_WIDTH-1:0] MTIME_H_ADDR    = 'h0200BFFC;
+parameter [ADDR_WIDTH-1:0] MTIMECMP_L_ADDR = 'h02004000;
+parameter [ADDR_WIDTH-1:0] MTIMECMP_H_ADDR = 'h02004004;
+parameter TIMER_CNT_MAX = 17'd100000;
 
 localparam MTVEC_CSR_ADDR = 12'h305;
 localparam MSCRATCH_CSR_ADDR = 12'h340;
@@ -128,6 +134,7 @@ localparam MSTATUS_CSR_ADDR = 12'h300;
 localparam MIE_CSR_ADDR = 12'h304;
 localparam MIP_CSR_ADDR = 12'h344;
 
+logic [1:0] current_privilege_level;
 wire bus_is_busy;
 wire [ADDR_WIDTH-1:0] if_stage_pc;
 wire [INSTR_WIDTH-1:0] fetched_instr;
@@ -139,6 +146,21 @@ wire mem_stage_mem_wr_en;
 wire [SELECT_WIDTH-1:0] mem_stage_sel;
 wire [DATA_WIDTH-1:0] mem_stage_wr_data;
 wire [DATA_WIDTH-1:0] raw_rd_mem_data;
+
+wire mem_stage_is_mmio;  // if it's memory mapped register (mtime, mtimecmp)
+assign mem_stage_is_mmio = (
+                    (mem_stage_alu_result == MTIME_L_ADDR)    ||
+                    (mem_stage_alu_result == MTIME_H_ADDR)    ||
+                    (mem_stage_alu_result == MTIMECMP_L_ADDR) ||
+                    (mem_stage_alu_result == MTIMECMP_H_ADDR)
+                 );
+wire mem_stage_mem_rd_en_after_judging_mmio;
+wire mem_stage_mem_wr_en_after_judging_mmio;
+assign mem_stage_mem_rd_en_after_judging_mmio = (mem_stage_mem_rd_en && (!mem_stage_is_mmio));
+assign mem_stage_mem_wr_en_after_judging_mmio = (mem_stage_mem_wr_en && (!mem_stage_is_mmio));
+wire mem_stage_csr_and_mmio_rf_wb_en;  // including load of mtime, mtimecmp
+wire mem_stage_csr_rf_wb_en;  // should be true if it's a csr instr and the rd field is not x0
+assign mem_stage_csr_and_mmio_rf_wb_en = (mem_stage_csr_rf_wb_en || (mem_stage_mem_rd_en && mem_stage_is_mmio));
 
 /* =========== Wishbone code begin =========== */
 
@@ -239,8 +261,8 @@ memory_controller_master #(
     .bus_data_i(wbm1_dat_i),
     .sel_i(mem_stage_sel),
     .ack_i(any_ack),
-    .rd_en(mem_stage_mem_rd_en),
-    .wr_en(mem_stage_mem_wr_en),
+    .rd_en(mem_stage_mem_rd_en_after_judging_mmio),
+    .wr_en(mem_stage_mem_wr_en_after_judging_mmio),
     .stb_o(wbm1_stb_o),
     .rd_data_o(raw_rd_mem_data),
     .bus_data_o(wbm1_dat_o),
@@ -451,21 +473,31 @@ wire id_to_exe_wr_en;
 wire exe_to_mem_wr_en;
 wire mem_stage_into_bubble;
 wire pc_wr_en;
-wire pc_is_from_branch;
+wire pc_is_from_exe_stage_branch;  // whether exe stage's normal branch takes place
+wire mem_stage_should_handle_exception;  // including handle mret, because it will branch, too //TODO
+wire should_take_any_branch;  // MEM's exception branch or EXE's normal branch
+assign should_take_any_branch = pc_is_from_exe_stage_branch | mem_stage_should_handle_exception;
+
+// Mark EXE as having an interrupt, then when it enters MEM, immediately handle the interrupt, so that
+// we'll not interrupt a continuous bus request.
+// `exe_has_pending_async_exception` will stop all possible side effects after entering MEM.
+// No matter whether EXE's instr is a nop, `exe_has_pending_async_exception` will set it as an async exception.
+// `exe_has_pending_async_exception` will determine `mem_stage_should_handle_exception` together with other signals.
+logic exe_has_pending_async_exception;
 
 wire mem_stage_request_use;
-assign mem_stage_request_use = mem_stage_mem_rd_en | mem_stage_mem_wr_en;
+assign mem_stage_request_use = mem_stage_mem_rd_en_after_judging_mmio | mem_stage_mem_wr_en_after_judging_mmio;
 
 hazard_detection_unit hazard_detection_unit_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
-    .exe_stage_should_branch(pc_is_from_branch),
+    .should_take_any_branch_i(should_take_any_branch),
     .mem_stage_ack(wbm1_ack_i),
     .if_stage_ack(wbm0_ack_i),
     .if_stage_using_bus(wbm0_stb_o),
     .mem_stage_using_bus(wbm1_stb_o),
     .mem_stage_request_use(mem_stage_request_use),
-    .if_stage_invalid(if_stage_invalid),
+    .if_stage_is_invalid(if_stage_invalid),
     .if_stage_into_bubble(if_stage_into_bubble),
     .bus_is_busy(bus_is_busy),
     .mem_stage_into_bubble(mem_stage_into_bubble),
@@ -481,14 +513,28 @@ assign next_normal_pc = 'd4 + if_stage_pc;
 
 wire [ADDR_WIDTH-1:0] branch_pc;
 wire [ADDR_WIDTH-1:0] pc_chosen;
+wire [ADDR_WIDTH-1:0] exception_dest_pc;
+wire mem_stage_is_async_exception;  //TODO
+assign exception_dest_pc = 
+     (!mem_stage_should_handle_exception) ? 'd0 :
+     mem_stage_is_mret ? mepc_csr :  // not a real exception
+     // the followings are conceptually genuine exceptions (interrupts)
+     (mtvec_csr[1:0] == 'b00) ? mtvec_csr :
+     ((mtvec_csr[1:0] == 'b01) && mem_stage_is_async_exception) ? 
+            ({mtvec_csr[31:2], 2'b00} + ({1'b0, mcause_csr[30:0]} << 'd2)) :
+     ((mtvec_csr[1:0] == 'b01) && !mem_stage_is_async_exception) ? 
+            {mtvec_csr[31:2], 2'b00} :
+     'd0;
 
 pc_mux #(
     .ADDR_WIDTH(ADDR_WIDTH)
 ) pc_mux_inst (
-    .next_normal_pc(next_normal_pc),
-    .branch_pc(branch_pc),
-    .pc_is_from_branch(pc_is_from_branch),
-    .pc_chosen(pc_chosen)
+    .next_normal_pc_i(next_normal_pc),
+    .branch_pc_i(branch_pc),
+    .exception_dest_pc_i(exception_dest_pc),
+    .pc_is_from_exe_stage_branch_ctrl_i(pc_is_from_exe_stage_branch),
+    .should_handle_exception_ctrl_i(mem_stage_should_handle_exception),
+    .pc_chosen_o(pc_chosen)
 );
 
 PC_reg #(
@@ -499,7 +545,7 @@ PC_reg #(
     .sys_rst(sys_rst),
     .wr_en(pc_wr_en),
     .input_pc(pc_chosen),
-    .pc_is_from_branch(pc_is_from_branch),
+    .should_take_any_branch_i(should_take_any_branch),
     .output_pc(if_stage_pc)
 );
 
@@ -541,8 +587,7 @@ wire wb_stage_rf_wr_en;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b;
 
-wire mem_stage_csr_rf_wb_en;  // should be true if it's a csr instr and the rd field is not x0
-wire [REG_ADDR_WIDTH-1:0] mem_stage_csr_rd_addr;  // `rd` field (like `rs1`), not "read"
+wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_waddr;
 wire [DATA_WIDTH-1:0] mem_stage_csr_rd_data;
 
 
@@ -551,16 +596,20 @@ wire [DATA_WIDTH-1:0] mem_stage_csr_rd_data;
 // This control is based on that MEM and WB cannot be simultaneous, because memory access is multi-cycle.
 // If we improve the performance of memory access, such as by implementing cache, this whole structure needs
 // to change, and MEM stage forwarding may also be necessary.
-// And there should be no priority between `mem_stage_csr_rf_wb_en` and `wb_stage_rf_wr_en` .
+// And there should be no priority between `mem_stage_csr_and_mmio_rf_wb_en` and `wb_stage_rf_wr_en` .
 wire rf_wb_en;
 wire [REG_ADDR_WIDTH-1:0] rf_wb_addr;
 wire [DATA_WIDTH-1:0] rf_wb_data;
 
-assign rf_wb_en = wb_stage_rf_wr_en | mem_stage_csr_rf_wb_en;
-assign rf_wb_addr = mem_stage_csr_rf_wb_en ? mem_stage_csr_rd_addr :
-                    wb_stage_rf_wr_en   ? wb_stage_rf_waddr     : 'd0;
+assign rf_wb_en = wb_stage_rf_wr_en | mem_stage_csr_and_mmio_rf_wb_en;
+assign rf_wb_addr = mem_stage_csr_and_mmio_rf_wb_en ? mem_stage_rf_waddr    :
+                    wb_stage_rf_wr_en               ? wb_stage_rf_waddr     : 'd0;
 assign rf_wb_data = mem_stage_csr_rf_wb_en ? mem_stage_csr_rd_data :
-                    wb_stage_rf_wr_en   ? wb_stage_wr_rf_data   : 'd0;
+                    is_mtime_h_load ? mtime_h :
+                    is_mtime_l_load ? mtime_l :
+                    is_mtimecmp_h_load ? mtimecmp_h :
+                    is_mtimecmp_l_load ? mtimecmp_l :
+                    wb_stage_rf_wr_en ? wb_stage_wr_rf_data : 'd0;
 
 /* =========== register file write back control end =========== */
 
@@ -595,15 +644,23 @@ wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op;
 wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr;
 wire [1:0] decodede_csr_write_type;
 wire decoded_csr_rf_wb_en;
-wire [REG_ADDR_WIDTH-1:0] decoded_csr_rd_addr;
 wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr;
+wire decoded_exception_is_valid;
+wire [EXCEPTION_CODE_WIDTH-1:0] decoded_exception_code;
+wire decoded_is_mret;
 
 instr_decoder #(
     .INSTR_WIDTH(INSTR_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
-    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH),
+    .EXCEPTION_CODE_WIDTH(EXCEPTION_CODE_WIDTH),
+    .ADDR_WIDTH(ADDR_WIDTH),
+    .MTIME_L_ADDR(MTIME_L_ADDR),
+    .MTIME_H_ADDR(MTIME_H_ADDR),
+    .MTIMECMP_L_ADDR(MTIMECMP_L_ADDR),
+    .MTIMECMP_H_ADDR(MTIMECMP_H_ADDR)
 ) instr_decoder_inst (
     // input instruction
     .instr_i(id_stage_instr),
@@ -620,14 +677,16 @@ instr_decoder #(
     .decodede_csr_write_type_o(decodede_csr_write_type),
     .decoded_csr_rf_wb_en_o(decoded_csr_rf_wb_en),
     .decoded_csr_addr_o(decoded_csr_addr),
+    .decoded_exception_is_valid_o(decoded_exception_is_valid),
+    .decoded_is_mret_o(decoded_is_mret),
 
     .decoded_sel_cnt_o(decoded_sel_cnt),
     .decoded_rf_raddr_a_o(decoded_rf_raddr_a),
     .decoded_rf_raddr_b_o(decoded_rf_raddr_b),
     .decoded_imm_o(decoded_imm),
     .decoded_alu_op_o(decoded_alu_op),
-    .decoded_rf_waddr_o(decoded_rf_waddr),
-    .decoded_csr_rd_addr_o(decoded_csr_rd_addr)
+    .decoded_rd_addr_o(decoded_rf_waddr),
+    .decoded_exception_code_o(decoded_exception_code)
 );
 
 wire [1:0] id_stage_forward_a;
@@ -669,6 +728,8 @@ wire id_stage_jmp_src_reg_h_imm_l;
 wire [1:0] id_stage_csr_write_type;
 wire id_stage_csr_rf_wb_en;
 wire [CSR_ADDR_WIDTH-1:0] id_stage_csr_addr;
+wire id_stage_exception_is_valid;
+wire id_stage_is_mret;
 
 id_stage_bubblify_unit #(
     .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
@@ -685,6 +746,8 @@ id_stage_bubblify_unit #(
     .csr_write_type_i(decodede_csr_write_type),
     .csr_rf_wb_en_i(decoded_csr_rf_wb_en),
     .csr_addr_i(decoded_csr_addr),
+    .exception_is_valid_i(decoded_exception_is_valid),
+    .is_mret_i(decoded_is_mret),
 
     .id_stage_into_bubble_i(id_stage_into_bubble),
 
@@ -699,7 +762,9 @@ id_stage_bubblify_unit #(
     .jmp_src_reg_h_imm_l_o(id_stage_jmp_src_reg_h_imm_l),
     .csr_write_type_o(id_stage_csr_write_type),
     .csr_rf_wb_en_o(id_stage_csr_rf_wb_en),
-    .csr_addr_o(id_stage_csr_addr)
+    .csr_addr_o(id_stage_csr_addr),
+    .exception_is_valid_o(id_stage_exception_is_valid),
+    .is_mret_o(id_stage_is_mret)
 );
 
 wire exe_stage_mem_rd_en;
@@ -722,8 +787,10 @@ wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_a;
 wire [REG_ADDR_WIDTH-1:0] exe_stage_rf_raddr_b;
 wire [1:0] exe_stage_csr_write_type;
 wire exe_stage_csr_rf_wb_en;
-wire [REG_ADDR_WIDTH-1:0] exe_stage_csr_rd_addr;
 wire [CSR_ADDR_WIDTH-1:0] exe_stage_csr_addr;
+wire exe_stage_exception_is_valid;
+wire [EXCEPTION_CODE_WIDTH-1:0] exe_stage_exception_code;
+wire exe_stage_is_mret;
 
 wire [ADDR_WIDTH-1:0] direct_jmp_dest;
 assign direct_jmp_dest = exe_stage_pc + exe_stage_imm;
@@ -735,8 +802,8 @@ id_forwarding_unit #(
     .wb_addr(wb_stage_rf_waddr),
     .rf_raddr_a(decoded_rf_raddr_a),
     .rf_raddr_b(decoded_rf_raddr_b),
-    .csr_wb_en_i(mem_stage_csr_rf_wb_en),
-    .csr_wb_addr_i(mem_stage_csr_rd_addr),
+    .csr_wb_en_i(mem_stage_csr_and_mmio_rf_wb_en),
+    .mem_stage_rd_addr_i(mem_stage_rf_waddr),
     .forward_a_o(id_stage_forward_a),
     .forward_b_o(id_stage_forward_b)
 );
@@ -746,7 +813,8 @@ ID_to_EXE_regs #(
     .DATA_WIDTH(DATA_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH),
+    .EXCEPTION_CODE_WIDTH(EXCEPTION_CODE_WIDTH)
 ) ID_to_EXE_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -772,8 +840,10 @@ ID_to_EXE_regs #(
     .rf_raddr_b_i(decoded_rf_raddr_b),
     .csr_write_type_i(id_stage_csr_write_type),
     .csr_rf_wb_en_i(id_stage_csr_rf_wb_en),
-    .csr_rd_addr_i(decoded_csr_rd_addr),
     .csr_addr_i(id_stage_csr_addr),
+    .exception_is_valid_i(id_stage_exception_is_valid),
+    .exception_code_i(decoded_exception_code),
+    .is_mret_i(id_stage_is_mret),
 
     .mem_rd_en(exe_stage_mem_rd_en),
     .mem_wr_en(exe_stage_mem_wr_en),
@@ -795,8 +865,10 @@ ID_to_EXE_regs #(
     .rf_raddr_b(exe_stage_rf_raddr_b),
     .csr_write_type(exe_stage_csr_write_type),
     .csr_rf_wb_en(exe_stage_csr_rf_wb_en),
-    .csr_rd_addr(exe_stage_csr_rd_addr),
-    .csr_addr(exe_stage_csr_addr)
+    .csr_addr(exe_stage_csr_addr),
+    .exception_is_valid(exe_stage_exception_is_valid),
+    .exception_code(exe_stage_exception_code),
+    .is_mret(exe_stage_is_mret)
 );
 
 wire [1:0] exe_stage_forward_a;
@@ -878,7 +950,7 @@ branch_taker branch_taker_inst (
     .is_branch_i(exe_stage_is_branch_type),
     .alu_branch_result_i(exe_stage_alu_result),
     .is_uncond_jmp_i(exe_stage_is_uncond_jmp),
-    .take_branch_o(pc_is_from_branch)
+    .take_branch_o(pc_is_from_exe_stage_branch)
 );
 
 wire [DATA_WIDTH-1:0] exe_stage_final_alu_result;
@@ -896,21 +968,23 @@ link_mux #(
 );
 
 wire mem_stage_rf_wr_en;
-wire [REG_ADDR_WIDTH-1:0] mem_stage_rf_waddr;
 wire mem_stage_rf_w_src_mem_h_alu_l;
+wire mem_stage_rf_wr_en_after_judging_mmio;  // excluding load a time/timecmp
+assign mem_stage_rf_wr_en_after_judging_mmio = (mem_stage_rf_wr_en &&
+            (mem_stage_mem_rd_en_after_judging_mmio || (!mem_stage_mem_rd_en)));
 
 exe_forwarding_unit #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
 ) exe_forwarding_unit_inst (
-    .exe_to_mem_rf_wr_en_i(mem_stage_rf_wr_en),
+    .exe_to_mem_rf_wr_en_i(mem_stage_rf_wr_en_after_judging_mmio),
     .mem_to_wb_rf_wr_en_i(wb_stage_rf_wr_en),
     .exe_stage_operand_a_rf_addr_i(exe_stage_rf_raddr_a),
     .exe_stage_operand_b_rf_addr_i(exe_stage_rf_raddr_b),
     .exe_to_mem_rf_wr_addr_i(mem_stage_rf_waddr),
     .mem_to_wb_rf_wr_addr_i(wb_stage_rf_waddr),
     .mem_stage_rf_w_src_mem_h_alu_l_i(mem_stage_rf_w_src_mem_h_alu_l),
-    .csr_wb_en_i(mem_stage_csr_rf_wb_en),
-    .csr_wb_addr_i(mem_stage_csr_rd_addr),
+    .csr_wb_en_i(mem_stage_csr_and_mmio_rf_wb_en),
+    .mem_stage_rd_addr_i(mem_stage_rf_waddr),
     .forward_a_o(exe_stage_forward_a),
     .forward_b_o(exe_stage_forward_b)
 );
@@ -919,11 +993,17 @@ wire [1:0] mem_stage_sel_cnt;
 wire [DATA_WIDTH-1:0] mem_stage_csr_rs1_data;
 wire [1:0] mem_stage_csr_write_type;  // 00: nop, 01: clear, 10: set, 11: normal write to csr
 wire [CSR_ADDR_WIDTH-1:0] mem_stage_csr_addr;
+wire mem_stage_exception_is_valid;
+wire [EXCEPTION_CODE_WIDTH-1:0] mem_stage_exception_code;
+wire mem_stage_is_mret;
+wire [ADDR_WIDTH-1:0] mem_stage_pc;
 
 EXE_to_MEM_regs #(
     .DATA_WIDTH(DATA_WIDTH),
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH)
+    .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH),
+    .EXCEPTION_CODE_WIDTH(EXCEPTION_CODE_WIDTH),
+    .ADDR_WIDTH(ADDR_WIDTH)
 ) EXE_to_MEM_regs_inst (
     .sys_clk(sys_clk),
     .sys_rst(sys_rst),
@@ -940,8 +1020,11 @@ EXE_to_MEM_regs #(
     .csr_rs1_data_i(exe_stage_csr_rs1_data),
     .csr_write_type_i(exe_stage_csr_write_type),
     .csr_rf_wb_en_i(exe_stage_csr_rf_wb_en),
-    .csr_rd_addr_i(exe_stage_csr_rd_addr),
     .csr_addr_i(exe_stage_csr_addr),
+    .exception_is_valid_i(exe_stage_exception_is_valid),
+    .exception_code_i(exe_stage_exception_code),
+    .is_mret_i(exe_stage_is_mret),
+    .pc_i(exe_stage_pc),
 
     .mem_rd_en(mem_stage_mem_rd_en),
     .mem_wr_en(mem_stage_mem_wr_en),
@@ -954,8 +1037,11 @@ EXE_to_MEM_regs #(
     .csr_rs1_data(mem_stage_csr_rs1_data),
     .csr_write_type(mem_stage_csr_write_type),
     .csr_rf_wb_en(mem_stage_csr_rf_wb_en),
-    .csr_rd_addr(mem_stage_csr_rd_addr),
-    .csr_addr(mem_stage_csr_addr)
+    .csr_addr(mem_stage_csr_addr),
+    .exception_is_valid(mem_stage_exception_is_valid),
+    .exception_code(mem_stage_exception_code),
+    .is_mret(mem_stage_is_mret),
+    .pc(mem_stage_pc)
 );
 
 logic [DATA_WIDTH-1:0] mtvec_csr;
@@ -965,6 +1051,10 @@ logic [DATA_WIDTH-1:0] mcause_csr;
 logic [DATA_WIDTH-1:0] mstatus_csr;
 logic [DATA_WIDTH-1:0] mie_csr;
 logic [DATA_WIDTH-1:0] mip_csr;
+logic [DATA_WIDTH-1:0] mtime_l;
+logic [DATA_WIDTH-1:0] mtime_h;
+logic [DATA_WIDTH-1:0] mtimecmp_l;
+logic [DATA_WIDTH-1:0] mtimecmp_h;
 
 assign mem_stage_csr_rd_data = 
        {DATA_WIDTH{mem_stage_csr_rf_wb_en}} &
@@ -1017,27 +1107,170 @@ always_comb begin : calc_csr_tmp_val_for_concise_always_ff_block
     end
 end
 
-always_ff @(posedge sys_clk) begin : csr_instr_operation
+always_ff @(posedge sys_clk) begin : mepc
+    if (sys_rst) begin
+        mepc_csr <= 'd0;
+    end
+    // If at the time of a csr instr, there is an interrupt, we suspend this interrupt for one more cycle
+    // so that these following two conditions don't clash.
+    else if ((mem_stage_csr_write_type != 'b00) && (mem_stage_csr_addr == MEPC_CSR_ADDR)) begin
+        mepc_csr <= tmp_csr_intermediate_val;
+    end
+    else if (mem_stage_should_handle_exception) begin
+        // "Otherwise, mepc is never written by the implementation." - page 42(48) of the spec
+        mepc_csr <= mem_stage_pc;
+    end
+end
+
+// These CSRs are only going to be written by software, not the implementation.
+always_ff @(posedge sys_clk) begin : mtvec_mscratch
     if (sys_rst) begin
         mtvec_csr <= 'd0;
         mscratch_csr <= 'd0;
-        mepc_csr <= 'd0;
-        mcause_csr <= 'd0;
-        mstatus_csr <= 'd0;
-        mie_csr <= 'd0;
-        mip_csr <= 'd0;
     end
     else if (mem_stage_csr_write_type != 'b00) begin
         case (mem_stage_csr_addr)
             MTVEC_CSR_ADDR    : mtvec_csr    <= tmp_csr_intermediate_val;
             MSCRATCH_CSR_ADDR : mscratch_csr <= tmp_csr_intermediate_val;
-            MEPC_CSR_ADDR     : mepc_csr     <= tmp_csr_intermediate_val;
-            MCAUSE_CSR_ADDR   : mcause_csr   <= tmp_csr_intermediate_val;
-            MSTATUS_CSR_ADDR  : mstatus_csr  <= tmp_csr_intermediate_val;
-            MIE_CSR_ADDR      : mie_csr      <= tmp_csr_intermediate_val;
-            MIP_CSR_ADDR      : mip_csr      <= tmp_csr_intermediate_val;
             default           :                                         ;
         endcase
+    end
+end
+
+always_ff @(posedge sys_clk) begin : mcause
+    if (sys_rst) begin
+        mcause_csr <= 'd0;
+    end
+    else if ((mem_stage_csr_write_type != 'b00) && (mem_stage_csr_addr == MCAUSE_CSR_ADDR)) begin
+        mcause_csr <= tmp_csr_intermediate_val;
+    end
+    else if (mem_stage_should_handle_exception) begin
+        // "Otherwise, mcause is never written by the implementation." - page 42(48) of the spec
+        if (mem_stage_is_async_exception) begin
+            // machine timer interrupt
+            mcause_csr <= {1'b1, 31'd7};
+        end
+        else if (!mem_stage_is_mret) begin
+            // `mret` can't have a cause, because it's a return, not into a trap.
+            // `ecall` or `ebreak`
+            mcause_csr <= {1'b0, mem_stage_exception_code};
+        end
+    end
+end
+
+// mstatus.MPP(12:11), mstatus.MIE(3), mstatus.MPIE(7)  also manage privilege level //TODO
+always_ff @(posedge sys_clk) begin : mstatus
+    if (sys_rst) begin
+        mstatus_csr <= 'd0;
+        current_privilege_level <= 2'b11;  // M-level
+    end
+    else if ((mem_stage_csr_write_type != 'b00) && (mem_stage_csr_addr == MSTATUS_CSR_ADDR)) begin
+        mstatus_csr <= tmp_csr_intermediate_val;
+    end
+    else if (mem_stage_is_mret) begin
+        mstatus_csr[12:11] <= 2'b00;  // U-level
+        current_privilege_level <= mstatus_csr[12:11];  // MPP
+    end
+    else if (mem_stage_should_handle_exception) begin
+        mstatus_csr[12:11] <= current_privilege_level;
+        current_privilege_level <= 2'b11;
+    end
+end
+
+logic [16:0] timer_counter;
+// 10M ~ 100ns, sets `mtime` to increment 10ms each time, so `timer_counter` counts 1e5 cycles of 10M
+always_ff @(posedge sys_clk) begin : standard_timer
+    if (sys_rst) begin
+        timer_counter <= 'd0;
+    end
+    else if (timer_counter >= (TIMER_CNT_MAX - 'd1)) begin
+        timer_counter <= 'd0;
+    end
+    else begin
+        timer_counter <= timer_counter + 'd1;
+    end
+end
+
+wire is_mtime_h_load, is_mtime_l_load, is_mtime_h_store, is_mtime_l_store,
+     is_mtimecmp_h_load, is_mtimecmp_l_load, is_mtimecmp_h_store, is_mtimecmp_l_store;
+assign is_mtime_h_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIME_H_ADDR));
+assign is_mtime_l_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIME_L_ADDR));
+assign is_mtime_h_store = (mem_stage_mem_wr_en && (mem_stage_alu_result == MTIME_H_ADDR));
+assign is_mtime_l_store = (mem_stage_mem_wr_en && (mem_stage_alu_result == MTIME_L_ADDR));
+assign is_mtimecmp_h_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIMECMP_H_ADDR));
+assign is_mtimecmp_l_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIMECMP_L_ADDR));
+assign is_mtimecmp_h_store = (mem_stage_mem_wr_en && (mem_stage_alu_result == MTIMECMP_H_ADDR));
+assign is_mtimecmp_l_store = (mem_stage_mem_wr_en && (mem_stage_alu_result == MTIMECMP_L_ADDR));
+
+wire [63:0] mtime;  wire [63:0] mtimecmp;
+assign mtime = {mtime_h, mtime_l};
+assign mtimecmp = {mtimecmp_h, mtimecmp_l};
+
+logic should_increment_mtime;
+always_ff @(posedge sys_clk) begin : mtime_update
+    if (sys_rst) begin
+        {mtime_h, mtime_l} <= 'd0;
+        should_increment_mtime <= 'd0;
+    end
+    else if (((timer_counter == (TIMER_CNT_MAX - 'd1)) || should_increment_mtime) &&
+             (!is_mtime_l_store) && (!is_mtime_h_store)) begin
+        // each time when `timer_counter` reaches max again, `mtime` increments by 1 (if not written by mmio)
+        should_increment_mtime <= 'd0;
+        {mtime_h, mtime_l} <= mtime + 'd1;
+    end
+    else if (timer_counter == (TIMER_CNT_MAX - 'd1)) begin
+        should_increment_mtime <= 'd1;  // at the next non-store mtime cycle, increment mtime (maybe unnecessary)
+        if (is_mtime_l_store) begin
+            mtime_l <= mem_stage_non_imm_operand_b;
+        end
+        else if (is_mtime_h_store) begin
+            mtime_h <= mem_stage_non_imm_operand_b;
+        end
+    end
+    else if (is_mtime_l_store) begin
+        mtime_l <= mem_stage_non_imm_operand_b;
+    end
+    else if (is_mtime_h_store) begin
+        mtime_h <= mem_stage_non_imm_operand_b;
+    end
+end
+always_ff @(posedge sys_clk) begin : mtimecmp_update
+    if (sys_rst) begin
+        {mtimecmp_h, mtimecmp_l} <= 'd0;
+    end
+    else if (is_mtimecmp_l_store) begin
+        mtimecmp_l <= mem_stage_non_imm_operand_b;
+    end
+    else if (is_mtimecmp_h_store) begin
+        mtimecmp_h <= mem_stage_non_imm_operand_b;
+    end
+end
+
+// mip.MTIP(7)
+always_ff @(posedge sys_clk) begin : mip__and__marking_signals_for_interrupt_pending
+    if (sys_rst) begin
+        mip_csr <= 'd0;
+        exe_has_pending_async_exception <= 'd0;
+    end
+    // "MTIP is read-only in mip, and is cleared by writing to the memory-mapped machine-mode timer compare register."
+    // - page 37(43) of the spec
+    else if (mtime >= mtimecmp) begin
+        mip_csr[7] <= 1'b1;
+        exe_has_pending_async_exception <= 'd1;
+    end
+    else if (is_mtimecmp_h_store || is_mtimecmp_l_store) begin  // ((is_mtimecmp_h_store && (mtime < {mem_stage_non_imm_operand_b, mtimecmp_l})) || (is_mtimecmp_l_store && (mtime < {mtimecmp_h, mem_stage_non_imm_operand_b})))
+        mip_csr[7] <= 1'b0;
+        exe_has_pending_async_exception <= 'd0;
+    end
+end
+
+// mie.MTIE(7)
+always_ff @(posedge sys_clk) begin : mie
+    if (sys_rst) begin
+        mie_csr <= 'd0;  // when need to enable this interrupt, kernel sets it
+    end
+    else if ((mem_stage_csr_write_type != 'b00) && (mem_stage_csr_addr == MIE_CSR_ADDR)) begin
+        mie_csr <= tmp_csr_intermediate_val;
     end
 end
 
@@ -1064,7 +1297,7 @@ wire final_mem_stage_rf_wr_en;
 mem_stage_bubblify_mux mem_stage_bubblify_mux_inst (
     .into_bubble_i(mem_stage_into_bubble),
     .rf_w_src_mem_h_alu_l_i(mem_stage_rf_w_src_mem_h_alu_l),
-    .rf_wr_en_i(mem_stage_rf_wr_en),
+    .rf_wr_en_i(mem_stage_rf_wr_en_after_judging_mmio),
     .rf_w_src_mem_h_alu_l_o(final_mem_stage_rf_w_src_mem_h_alu_l),
     .rf_wr_en_o(final_mem_stage_rf_wr_en)
 );

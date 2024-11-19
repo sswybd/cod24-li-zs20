@@ -5,7 +5,8 @@ module ID_to_EXE_regs #(
     parameter DATA_WIDTH = 32,
     parameter ALU_OP_ENCODING_WIDTH = 5,
     parameter REG_ADDR_WIDTH = 5,
-    parameter CSR_ADDR_WIDTH = 12
+    parameter CSR_ADDR_WIDTH = 12,
+    parameter EXCEPTION_CODE_WIDTH = 31
 ) (
     input wire sys_clk,
     input wire sys_rst,
@@ -35,8 +36,10 @@ module ID_to_EXE_regs #(
     input wire [REG_ADDR_WIDTH-1:0] rf_raddr_b_i,
     input wire [1:0] csr_write_type_i,
     input wire csr_rf_wb_en_i,
-    input wire [REG_ADDR_WIDTH-1:0] csr_rd_addr_i,
     input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
+    input wire exception_is_valid_i,
+    input wire [EXCEPTION_CODE_WIDTH-1:0] exception_code_i,
+    input wire is_mret_i,
     
     output logic mem_rd_en,
     output logic mem_wr_en,
@@ -61,8 +64,10 @@ module ID_to_EXE_regs #(
     output logic [REG_ADDR_WIDTH-1:0] rf_raddr_b,
     output logic [1:0] csr_write_type,
     output logic csr_rf_wb_en,
-    output logic [REG_ADDR_WIDTH-1:0] csr_rd_addr,
-    output logic [CSR_ADDR_WIDTH-1:0] csr_addr
+    output logic [CSR_ADDR_WIDTH-1:0] csr_addr,
+    output logic exception_is_valid,
+    output logic [EXCEPTION_CODE_WIDTH-1:0] exception_code,
+    output logic is_mret
 );
 
 `simple_reg(mem_rd_en, mem_rd_en_i);
@@ -88,7 +93,9 @@ module ID_to_EXE_regs #(
 `simple_reg(rf_raddr_b, rf_raddr_b_i);
 `simple_reg(csr_write_type, csr_write_type_i);
 `simple_reg(csr_rf_wb_en, csr_rf_wb_en_i);
-`simple_reg(csr_rd_addr, csr_rd_addr_i);
 `simple_reg(csr_addr, csr_addr_i);
+`simple_reg(exception_is_valid, exception_is_valid_i);
+`simple_reg(exception_code, exception_code_i);
+`simple_reg(is_mret, is_mret_i);
 
 endmodule

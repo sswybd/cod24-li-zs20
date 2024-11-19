@@ -13,6 +13,8 @@ module id_stage_bubblify_unit #(
     input wire [1:0] csr_write_type_i,
     input wire csr_rf_wb_en_i,
     input wire [CSR_ADDR_WIDTH-1:0] csr_addr_i,
+    input wire exception_is_valid_i,
+    input wire is_mret_i,
 
     input wire id_stage_into_bubble_i,
 
@@ -27,7 +29,9 @@ module id_stage_bubblify_unit #(
     output wire jmp_src_reg_h_imm_l_o,
     output wire [1:0] csr_write_type_o,
     output wire csr_rf_wb_en_o,
-    output wire [CSR_ADDR_WIDTH-1:0] csr_addr_o
+    output wire [CSR_ADDR_WIDTH-1:0] csr_addr_o,
+    output wire exception_is_valid_o,
+    output wire is_mret_o
 );
 
 assign mem_rd_en_o = id_stage_into_bubble_i ? 1'd0 : mem_rd_en_i;
@@ -42,5 +46,7 @@ assign jmp_src_reg_h_imm_l_o = id_stage_into_bubble_i ? 1'd0 : jmp_src_reg_h_imm
 assign csr_write_type_o = id_stage_into_bubble_i ? 2'b00 : csr_write_type_i;
 assign csr_rf_wb_en_o = id_stage_into_bubble_i ? 1'd0 : csr_rf_wb_en_i;
 assign csr_addr_o = id_stage_into_bubble_i ? 1'd0 : csr_addr_i;
+assign exception_is_valid_o = id_stage_into_bubble_i ? 1'd0 : exception_is_valid_i;
+assign is_mret_o = id_stage_into_bubble_i ? 1'd0 : is_mret_i;
 
 endmodule
