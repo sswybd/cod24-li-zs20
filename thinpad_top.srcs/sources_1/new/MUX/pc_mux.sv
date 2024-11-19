@@ -10,6 +10,6 @@ module pc_mux #(
 );
 
 assign pc_chosen_o = should_handle_exception_ctrl_i     ? exception_dest_pc_i :
-                     pc_is_from_exe_stage_branch_ctrl_i ? branch_pc           : next_normal_pc;
+                     pc_is_from_exe_stage_branch_ctrl_i ? branch_pc_i         : next_normal_pc_i;
 
 endmodule

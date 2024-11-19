@@ -152,7 +152,8 @@ assign decoded_exception_is_valid_o = is_ebreak | is_ecall;
 assign decoded_csr_addr_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000)) ?
                             instr_i[31:20] : 'd0;
 
-assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) && (decoded_csr_rd_addr_o != 'd0));
+assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) &&
+                                 (decoded_rd_addr_o != 'd0));
 
 wire [1:0] funct3_lower_two_bits;
 assign funct3_lower_two_bits = funct3[1:0];

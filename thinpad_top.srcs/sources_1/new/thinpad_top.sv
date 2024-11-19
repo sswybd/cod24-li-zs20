@@ -474,16 +474,41 @@ wire exe_to_mem_wr_en;
 wire mem_stage_into_bubble;
 wire pc_wr_en;
 wire pc_is_from_exe_stage_branch;  // whether exe stage's normal branch takes place
-wire mem_stage_should_handle_exception;  // including handle mret, because it will branch, too //TODO
+wire mem_stage_should_handle_exception;  // including handle mret, because it will branch, too
 wire should_take_any_branch;  // MEM's exception branch or EXE's normal branch
 assign should_take_any_branch = pc_is_from_exe_stage_branch | mem_stage_should_handle_exception;
+wire mem_stage_exception_is_valid;
+wire mem_stage_is_mret;
 
-// Mark EXE as having an interrupt, then when it enters MEM, immediately handle the interrupt, so that
-// we'll not interrupt a continuous bus request.
-// `exe_has_pending_async_exception` will stop all possible side effects after entering MEM.
-// No matter whether EXE's instr is a nop, `exe_has_pending_async_exception` will set it as an async exception.
-// `exe_has_pending_async_exception` will determine `mem_stage_should_handle_exception` together with other signals.
-logic exe_has_pending_async_exception;
+logic [DATA_WIDTH-1:0] mtvec_csr;
+logic [DATA_WIDTH-1:0] mscratch_csr;
+logic [DATA_WIDTH-1:0] mepc_csr;
+logic [DATA_WIDTH-1:0] mcause_csr;
+logic [DATA_WIDTH-1:0] mstatus_csr;
+logic [DATA_WIDTH-1:0] mie_csr;
+logic [DATA_WIDTH-1:0] mip_csr;
+logic [DATA_WIDTH-1:0] mtime_l;
+logic [DATA_WIDTH-1:0] mtime_h;
+logic [DATA_WIDTH-1:0] mtimecmp_l;
+logic [DATA_WIDTH-1:0] mtimecmp_h;
+
+// `mip_csr` marks EXE as having an interrupt. Then when entering MEM, immediately
+// handle the interrupt, so that we'll not interrupt a continuous bus request,
+// so we shall stop all possible side effects after entering MEM.
+// No matter whether EXE's instr is nop, we can set it as having an async exception, and
+// this means we are constantly requiring the handling of a pending interrupt.
+wire [DATA_WIDTH-1:0] mem_stage_mip;
+wire mem_stage_is_async_exception;
+assign mem_stage_is_async_exception = (
+            mem_stage_mip && mie_csr && (((current_privilege_level == 2'b11) && mstatus_csr[3]) ||
+            (current_privilege_level != 2'b11))
+            );
+assign mem_stage_should_handle_exception =
+(
+       mem_stage_is_async_exception ||
+       mem_stage_exception_is_valid ||
+       mem_stage_is_mret
+);
 
 wire mem_stage_request_use;
 assign mem_stage_request_use = mem_stage_mem_rd_en_after_judging_mmio | mem_stage_mem_wr_en_after_judging_mmio;
@@ -514,7 +539,6 @@ assign next_normal_pc = 'd4 + if_stage_pc;
 wire [ADDR_WIDTH-1:0] branch_pc;
 wire [ADDR_WIDTH-1:0] pc_chosen;
 wire [ADDR_WIDTH-1:0] exception_dest_pc;
-wire mem_stage_is_async_exception;  //TODO
 assign exception_dest_pc = 
      (!mem_stage_should_handle_exception) ? 'd0 :
      mem_stage_is_mret ? mepc_csr :  // not a real exception
@@ -600,6 +624,8 @@ wire [DATA_WIDTH-1:0] mem_stage_csr_rd_data;
 wire rf_wb_en;
 wire [REG_ADDR_WIDTH-1:0] rf_wb_addr;
 wire [DATA_WIDTH-1:0] rf_wb_data;
+wire is_mtime_h_load, is_mtime_l_load, is_mtime_h_store, is_mtime_l_store,
+     is_mtimecmp_h_load, is_mtimecmp_l_load, is_mtimecmp_h_store, is_mtimecmp_l_store;
 
 assign rf_wb_en = wb_stage_rf_wr_en | mem_stage_csr_and_mmio_rf_wb_en;
 assign rf_wb_addr = mem_stage_csr_and_mmio_rf_wb_en ? mem_stage_rf_waddr    :
@@ -655,12 +681,7 @@ instr_decoder #(
     .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
     .ALU_OP_ENCODING_WIDTH(ALU_OP_ENCODING_WIDTH),
     .CSR_ADDR_WIDTH(CSR_ADDR_WIDTH),
-    .EXCEPTION_CODE_WIDTH(EXCEPTION_CODE_WIDTH),
-    .ADDR_WIDTH(ADDR_WIDTH),
-    .MTIME_L_ADDR(MTIME_L_ADDR),
-    .MTIME_H_ADDR(MTIME_H_ADDR),
-    .MTIMECMP_L_ADDR(MTIMECMP_L_ADDR),
-    .MTIMECMP_H_ADDR(MTIMECMP_H_ADDR)
+    .EXCEPTION_CODE_WIDTH(EXCEPTION_CODE_WIDTH)
 ) instr_decoder_inst (
     // input instruction
     .instr_i(id_stage_instr),
@@ -993,9 +1014,7 @@ wire [1:0] mem_stage_sel_cnt;
 wire [DATA_WIDTH-1:0] mem_stage_csr_rs1_data;
 wire [1:0] mem_stage_csr_write_type;  // 00: nop, 01: clear, 10: set, 11: normal write to csr
 wire [CSR_ADDR_WIDTH-1:0] mem_stage_csr_addr;
-wire mem_stage_exception_is_valid;
 wire [EXCEPTION_CODE_WIDTH-1:0] mem_stage_exception_code;
-wire mem_stage_is_mret;
 wire [ADDR_WIDTH-1:0] mem_stage_pc;
 
 EXE_to_MEM_regs #(
@@ -1025,6 +1044,7 @@ EXE_to_MEM_regs #(
     .exception_code_i(exe_stage_exception_code),
     .is_mret_i(exe_stage_is_mret),
     .pc_i(exe_stage_pc),
+    .mip_i(mip_csr),
 
     .mem_rd_en(mem_stage_mem_rd_en),
     .mem_wr_en(mem_stage_mem_wr_en),
@@ -1041,20 +1061,9 @@ EXE_to_MEM_regs #(
     .exception_is_valid(mem_stage_exception_is_valid),
     .exception_code(mem_stage_exception_code),
     .is_mret(mem_stage_is_mret),
-    .pc(mem_stage_pc)
+    .pc(mem_stage_pc),
+    .mip(mem_stage_mip)    
 );
-
-logic [DATA_WIDTH-1:0] mtvec_csr;
-logic [DATA_WIDTH-1:0] mscratch_csr;
-logic [DATA_WIDTH-1:0] mepc_csr;
-logic [DATA_WIDTH-1:0] mcause_csr;
-logic [DATA_WIDTH-1:0] mstatus_csr;
-logic [DATA_WIDTH-1:0] mie_csr;
-logic [DATA_WIDTH-1:0] mip_csr;
-logic [DATA_WIDTH-1:0] mtime_l;
-logic [DATA_WIDTH-1:0] mtime_h;
-logic [DATA_WIDTH-1:0] mtimecmp_l;
-logic [DATA_WIDTH-1:0] mtimecmp_h;
 
 assign mem_stage_csr_rd_data = 
        {DATA_WIDTH{mem_stage_csr_rf_wb_en}} &
@@ -1158,7 +1167,7 @@ always_ff @(posedge sys_clk) begin : mcause
     end
 end
 
-// mstatus.MPP(12:11), mstatus.MIE(3), mstatus.MPIE(7)  also manage privilege level //TODO
+// mstatus.MPP(12:11), mstatus.MIE(3), mstatus.MPIE(7); also manage current privilege level
 always_ff @(posedge sys_clk) begin : mstatus
     if (sys_rst) begin
         mstatus_csr <= 'd0;
@@ -1168,12 +1177,16 @@ always_ff @(posedge sys_clk) begin : mstatus
         mstatus_csr <= tmp_csr_intermediate_val;
     end
     else if (mem_stage_is_mret) begin
-        mstatus_csr[12:11] <= 2'b00;  // U-level
-        current_privilege_level <= mstatus_csr[12:11];  // MPP
+        mstatus_csr[12:11] <= 2'b00;  // MPP: U-level
+        current_privilege_level <= mstatus_csr[12:11];
+        mstatus_csr[3] <= mstatus_csr[7];  // MIE
+        mstatus_csr[7] <= 1'b1;  // MPIE
     end
-    else if (mem_stage_should_handle_exception) begin
-        mstatus_csr[12:11] <= current_privilege_level;
+    else if (mem_stage_should_handle_exception && (!mem_stage_is_mret)) begin
+        mstatus_csr[12:11] <= current_privilege_level;  // MPP
         current_privilege_level <= 2'b11;
+        mstatus_csr[3] <= 1'b0;  // MIE
+        mstatus_csr[7] <= mstatus_csr[3];  // MPIE
     end
 end
 
@@ -1191,8 +1204,6 @@ always_ff @(posedge sys_clk) begin : standard_timer
     end
 end
 
-wire is_mtime_h_load, is_mtime_l_load, is_mtime_h_store, is_mtime_l_store,
-     is_mtimecmp_h_load, is_mtimecmp_l_load, is_mtimecmp_h_store, is_mtimecmp_l_store;
 assign is_mtime_h_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIME_H_ADDR));
 assign is_mtime_l_load = (mem_stage_mem_rd_en && (mem_stage_alu_result == MTIME_L_ADDR));
 assign is_mtime_h_store = (mem_stage_mem_wr_en && (mem_stage_alu_result == MTIME_H_ADDR));
@@ -1247,20 +1258,17 @@ always_ff @(posedge sys_clk) begin : mtimecmp_update
 end
 
 // mip.MTIP(7)
-always_ff @(posedge sys_clk) begin : mip__and__marking_signals_for_interrupt_pending
+always_ff @(posedge sys_clk) begin : mip
     if (sys_rst) begin
         mip_csr <= 'd0;
-        exe_has_pending_async_exception <= 'd0;
     end
     // "MTIP is read-only in mip, and is cleared by writing to the memory-mapped machine-mode timer compare register."
     // - page 37(43) of the spec
     else if (mtime >= mtimecmp) begin
         mip_csr[7] <= 1'b1;
-        exe_has_pending_async_exception <= 'd1;
     end
     else if (is_mtimecmp_h_store || is_mtimecmp_l_store) begin  // ((is_mtimecmp_h_store && (mtime < {mem_stage_non_imm_operand_b, mtimecmp_l})) || (is_mtimecmp_l_store && (mtime < {mtimecmp_h, mem_stage_non_imm_operand_b})))
         mip_csr[7] <= 1'b0;
-        exe_has_pending_async_exception <= 'd0;
     end
 end
 
