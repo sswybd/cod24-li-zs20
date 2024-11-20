@@ -124,7 +124,7 @@ parameter [ADDR_WIDTH-1:0] MTIME_L_ADDR    = 'h0200BFF8;
 parameter [ADDR_WIDTH-1:0] MTIME_H_ADDR    = 'h0200BFFC;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_L_ADDR = 'h02004000;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_H_ADDR = 'h02004004;
-parameter TIMER_CNT_MAX = 17'd100000;
+parameter TIMER_CNT_MAX = 4'd10;
 
 localparam MTVEC_CSR_ADDR = 12'h305;
 localparam MSCRATCH_CSR_ADDR = 12'h340;
@@ -1195,8 +1195,8 @@ always_ff @(posedge sys_clk) begin : mstatus
     end
 end
 
-logic [16:0] timer_counter;
-// 10M ~ 100ns, sets `mtime` to increment 10ms each time, so `timer_counter` counts 1e5 cycles of 10M
+logic [3:0] timer_counter;
+// 10M ~ 100ns, sets `mtime` to increment 1us each time, so `timer_counter` counts 10 cycles of 10M
 always_ff @(posedge sys_clk) begin : standard_timer
     if (sys_rst) begin
         timer_counter <= 'd0;
