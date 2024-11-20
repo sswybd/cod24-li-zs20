@@ -60,8 +60,8 @@ assign is_ecall = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (i
 assign is_ebreak = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (instr_i[31:20] == 'd1));
 
 // code 0 means instr addr misaligned, so we need `exception_is_valid` to indicate whether it's a real exception
-assign decoded_exception_code_o = is_ecall ? 'd11 :
-                                  is_ebreak ? 'd3 : 'd0;
+assign decoded_exception_code_o = is_ecall  ? 'd11 :
+                                  is_ebreak ? 'd3  : 'd0;
 
 // just in case, to ensure the destination reg is set to zero if not needed, 
 // maybe preventing possible and unwanted forwarding
@@ -91,6 +91,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           is_ctz ? 'd13 :  // ctz
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0100000)) ? 'd14 :  // xnor
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b001) && (funct7 == 7'b0100100)) ? 'd15 :  // sbclr
+                          ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b011) && (funct7 == 7'b0000000)) ? 'd16 :  // sltu
                           'd0;
 
 always_comb begin : calc_imm
