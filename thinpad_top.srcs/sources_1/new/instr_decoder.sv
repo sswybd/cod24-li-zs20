@@ -18,6 +18,7 @@ module instr_decoder #(
     localparam SYSTEM_OPCODE = 5'b11100
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
+    input wire [1:0] current_privilege_level_i,
 
     // signal outputs that need (or it's better) to bubblify
     output wire decoded_mem_rd_en_o,
@@ -60,8 +61,10 @@ assign is_ecall = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (i
 assign is_ebreak = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (instr_i[31:20] == 'd1));
 
 // code 0 means instr addr misaligned, so we need `exception_is_valid` to indicate whether it's a real exception
-assign decoded_exception_code_o = is_ecall  ? 'd11 :
-                                  is_ebreak ? 'd3  : 'd0;
+assign decoded_exception_code_o = (is_ecall && (current_privilege_level_i == 2'b11)) ? 'd11 :
+                                  (is_ecall && (current_privilege_level_i == 2'b01)) ? 'd9 :
+                                  (is_ecall && (current_privilege_level_i == 2'b00)) ? 'd8 :
+                                  is_ebreak ? 'd3 : 'd0;
 
 // just in case, to ensure the destination reg is set to zero if not needed, 
 // maybe preventing possible and unwanted forwarding

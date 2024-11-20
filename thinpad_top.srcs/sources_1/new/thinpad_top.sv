@@ -685,6 +685,7 @@ instr_decoder #(
 ) instr_decoder_inst (
     // input instruction
     .instr_i(id_stage_instr),
+    .current_privilege_level_i(current_privilege_level),
 
     .decoded_mem_rd_en_o(decoded_mem_rd_en),
     .decoded_mem_wr_en_o(decoded_mem_wr_en),
@@ -1168,6 +1169,10 @@ always_ff @(posedge sys_clk) begin : mcause
 end
 
 // mstatus.MPP(12:11), mstatus.MIE(3), mstatus.MPIE(7); also manage current privilege level
+// Currently, privilege level will only be changed on mret, ecall, ebreak or interrupt, which
+// will all change the instr stream. So no need to worry that the later instructions should have
+// been in a new privilege level, but because of one cycle's delay, decoder thinks it as in the old
+// privilege level.
 always_ff @(posedge sys_clk) begin : mstatus
     if (sys_rst) begin
         mstatus_csr <= 'd0;
