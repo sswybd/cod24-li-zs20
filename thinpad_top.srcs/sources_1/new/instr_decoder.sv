@@ -4,6 +4,7 @@ module instr_decoder #(
     parameter REG_ADDR_WIDTH = 5,
     parameter ALU_OP_ENCODING_WIDTH = 5,
     parameter CSR_ADDR_WIDTH = 12,
+    parameter EXCEPTION_CODE_WIDTH = 31,
 
     localparam LUI_OPCODE = 5'b01101,
     localparam B_TYPE_OPCODE = 5'b11000,
@@ -17,6 +18,7 @@ module instr_decoder #(
     localparam SYSTEM_OPCODE = 5'b11100
 ) (
     input wire [INSTR_WIDTH-1:0] instr_i,
+    input wire [1:0] current_privilege_level_i,
 
     // signal outputs that need (or it's better) to bubblify
     output wire decoded_mem_rd_en_o,
@@ -31,6 +33,8 @@ module instr_decoder #(
     output wire [1:0] decodede_csr_write_type_o,  // 00: nop, 01: clear, 10: set, 11: normal write to csr
     output wire decoded_csr_rf_wb_en_o,  // whether write back the data read from csr to rf
     output wire [CSR_ADDR_WIDTH-1:0] decoded_csr_addr_o,
+    output wire decoded_exception_is_valid_o,
+    output wire decoded_is_mret_o,
 
     // signal outputs that absolutely (for now) don't need to bubblify
     output wire [1:0] decoded_sel_cnt_o,  // 2'd0 means lw/sw; 2'd1 means lb/wb; 2'd2 means lh/sw; 2'd3 means nill
@@ -38,8 +42,8 @@ module instr_decoder #(
     output wire [REG_ADDR_WIDTH-1:0] decoded_rf_raddr_b_o,
     output logic [DATA_WIDTH-1:0] decoded_imm_o,
     output wire [ALU_OP_ENCODING_WIDTH-1:0] decoded_alu_op_o,
-    output wire [REG_ADDR_WIDTH-1:0] decoded_rf_waddr_o,
-    output wire [REG_ADDR_WIDTH-1:0] decoded_csr_rd_addr_o
+    output wire [REG_ADDR_WIDTH-1:0] decoded_rd_addr_o,
+    output wire [EXCEPTION_CODE_WIDTH-1:0] decoded_exception_code_o
 );
 
 wire [4:0] opcode_segment;
@@ -51,11 +55,20 @@ assign funct3 = instr_i[14:12];
 wire [6:0] funct7;
 assign funct7 = instr_i[31:25];
 
-assign decoded_csr_rd_addr_o = instr_i[11:7];
+wire is_ecall;
+wire is_ebreak;
+assign is_ecall = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (instr_i[31:20] == 'd0));
+assign is_ebreak = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) && (instr_i[31:20] == 'd1));
+
+// code 0 means instr addr misaligned, so we need `exception_is_valid` to indicate whether it's a real exception
+assign decoded_exception_code_o = (is_ecall && (current_privilege_level_i == 2'b11)) ? 'd11 :
+                                  (is_ecall && (current_privilege_level_i == 2'b01)) ? 'd9 :
+                                  (is_ecall && (current_privilege_level_i == 2'b00)) ? 'd8 :
+                                  is_ebreak ? 'd3 : 'd0;
 
 // just in case, to ensure the destination reg is set to zero if not needed, 
 // maybe preventing possible and unwanted forwarding
-assign decoded_rf_waddr_o = ((opcode_segment != B_TYPE_OPCODE) && (opcode_segment != S_TYPE_OPCODE)) ?
+assign decoded_rd_addr_o = ((opcode_segment != B_TYPE_OPCODE) && (opcode_segment != S_TYPE_OPCODE)) ?
                             instr_i[11:7] : 'd0;
 
 wire is_ctz;  // tmp variable in this module
@@ -81,6 +94,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           is_ctz ? 'd13 :  // ctz
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0100000)) ? 'd14 :  // xnor
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b001) && (funct7 == 7'b0100100)) ? 'd15 :  // sbclr
+                          ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b011) && (funct7 == 7'b0000000)) ? 'd16 :  // sltu
                           'd0;
 
 always_comb begin : calc_imm
@@ -134,10 +148,16 @@ assign decoded_sel_cnt_o = (((opcode_segment == S_TYPE_OPCODE) || (opcode_segmen
                         (((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE))
                          && (funct3 == 3'b010)) ? 'd0 : 'd0;   // word
 
+assign decoded_is_mret_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 == 3'b000) &&
+                            (instr_i[31:20] == 12'b001100000010));
+
+assign decoded_exception_is_valid_o = is_ebreak | is_ecall;
+
 assign decoded_csr_addr_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000)) ?
                             instr_i[31:20] : 'd0;
 
-assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) && (decoded_csr_rd_addr_o != 'd0));
+assign decoded_csr_rf_wb_en_o = ((opcode_segment == SYSTEM_OPCODE) && (funct3 != 3'b000) &&
+                                 (decoded_rd_addr_o != 'd0));
 
 wire [1:0] funct3_lower_two_bits;
 assign funct3_lower_two_bits = funct3[1:0];

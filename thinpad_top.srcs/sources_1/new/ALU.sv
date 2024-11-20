@@ -47,7 +47,8 @@ assign alu_result =
                ({DATA_WIDTH{alu_op == 'd15}} &
                 (operand_a & 
                     (~('d1 << (operand_b & {{(DATA_WIDTH-SHIFT_RANGE){1'b0}}, {SHIFT_RANGE{1'b1}}}))))
-               )  // sbclr
+               ) |  // sbclr
+               ({DATA_WIDTH{alu_op == 'd16}} & {{(DATA_WIDTH-1){1'b0}}, (operand_a < operand_b)})  // sltu
                 
                 ;
 
