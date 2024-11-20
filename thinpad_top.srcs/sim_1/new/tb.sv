@@ -47,7 +47,8 @@ module tb;
 
   // Windows 需要注意路径分隔符的转义，例如 "D:\\foo\\bar.bin"
 //   parameter BASE_RAM_INIT_FILE = "C:\\Users\\SSWYBD\\Desktop\\rv-2024\\asmcode\\kernel.bin";  // BaseRAM 初始化文件，请修改为实际的绝对路径
-  parameter BASE_RAM_INIT_FILE = "C:\\Users\\SSWYBD\\Desktop\\rv-2024\\sswybd\\cpu_debug\\test_csr_instrs.bin";
+//   parameter BASE_RAM_INIT_FILE = "C:\\Users\\SSWYBD\\Desktop\\rv-2024\\sswybd\\cpu_debug\\test_csr_instrs.bin";
+    parameter BASE_RAM_INIT_FILE = "C:\\Users\\SSWYBD\\Desktop\\rv-2024\\sswybd\\kernel_pruned\\kernel.bin";
   
   parameter EXT_RAM_INIT_FILE = "/tmp/eram.bin";  // ExtRAM 初始化文件，请修改为实际的绝对路径
   parameter FLASH_INIT_FILE = "/tmp/kernel.elf";  // Flash 初始化文件，请修改为实际的绝对路径
@@ -60,6 +61,12 @@ module tb;
     #100;
     reset_btn = 0;
     #1500;
+
+    // simulate PC: send characters to FPGA via "direct serial port" (直连串口)
+    // uart.pc_send_byte(8'h32); // ASCII '2'
+    // #10000;
+    // uart.pc_send_byte(8'h33); // ASCII '3'
+    // #1500;
 
     #15000000 $finish;
   end

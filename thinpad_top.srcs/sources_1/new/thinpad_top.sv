@@ -1262,12 +1262,12 @@ always_ff @(posedge sys_clk) begin : mip
     if (sys_rst) begin
         mip_csr <= 'd0;
     end
-    // "MTIP is read-only in mip, and is cleared by writing to the memory-mapped machine-mode timer compare register."
-    // - page 37(43) of the spec
-    else if (mtime >= mtimecmp) begin
+    // "MTIP is read-only in mip, and is cleared by writing to the memory-mapped machine-mode timer
+    // compare register." - page 37(43) of the spec
+    else if ((mtime >= mtimecmp) && (!(is_mtimecmp_h_store || is_mtimecmp_l_store))) begin
         mip_csr[7] <= 1'b1;
     end
-    else if (is_mtimecmp_h_store || is_mtimecmp_l_store) begin  // ((is_mtimecmp_h_store && (mtime < {mem_stage_non_imm_operand_b, mtimecmp_l})) || (is_mtimecmp_l_store && (mtime < {mtimecmp_h, mem_stage_non_imm_operand_b})))
+    else if (is_mtimecmp_h_store || is_mtimecmp_l_store) begin
         mip_csr[7] <= 1'b0;
     end
 end

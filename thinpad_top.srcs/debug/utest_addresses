@@ -1,0 +1,10 @@
+C:\Users\SSWYBD\Desktop\rv-2024\supervisor-rv\kernel>make EN_INT=y EN_UART16550=n show-utest
+riscv64-unknown-elf-ld  obj/evec.o  obj/init.o  obj/shell.o  obj/test.o  obj/trap.o  obj/utils.o -Tkern/kernel32.ld
+1:80001000 <UTEST_SIMPLE>:
+2:80001008 <UTEST_1PTB>:
+3:80001024 <UTEST_2DCT>:
+4:80001064 <UTEST_3CCT>:
+5:80001080 <UTEST_4MDCT>:
+6:800010a8 <UTEST_PUTC>:
+7:800010c0 <UTEST_SPIN>:
+8:800010c4 <UTEST_CRYPTONIGHT>:
