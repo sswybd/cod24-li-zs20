@@ -80,11 +80,11 @@ module thinpad_top (
     output wire       video_de      // 行数据有效信号，用于区分消隐区
 );
 
-wire clk_out1;
+wire clk_out2;
 wire locked;
 pll_example pll_inst (
-    .clk_out1(clk_out1),     // 50M
-    .clk_out2(),             // 10M
+    .clk_out1(),         // 50M
+    .clk_out2(clk_out2), // 100M
 
     .reset(reset_btn),
     .locked(locked),
@@ -92,17 +92,17 @@ pll_example pll_inst (
     .clk_in1(clk_50M)
 );
 
-logic reset_of_clk50M;
-always_ff @(posedge clk_out1 or negedge locked) begin
-    if (~locked) reset_of_clk50M <= 1'b1;
-    else reset_of_clk50M <= 1'b0;
+logic reset_of_clk100M;
+always_ff @(posedge clk_out2 or negedge locked) begin
+    if (~locked) reset_of_clk100M <= 1'b1;
+    else reset_of_clk100M <= 1'b0;
 end
 
 wire sys_clk;
 wire sys_rst;
 
-assign sys_clk = clk_out1;
-assign sys_rst = reset_of_clk50M;
+assign sys_clk = clk_out2;
+assign sys_rst = reset_of_clk100M;
 
 // 本实验不使用 CPLD 串口，禁用防止总线冲突
 assign uart_rdn = 1'd1;
@@ -122,7 +122,7 @@ parameter [ADDR_WIDTH-1:0] MTIME_L_ADDR    = 'h0200BFF8;
 parameter [ADDR_WIDTH-1:0] MTIME_H_ADDR    = 'h0200BFFC;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_L_ADDR = 'h02004000;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_H_ADDR = 'h02004004;
-parameter TIMER_CNT_MAX = 6'd50;
+parameter TIMER_CNT_MAX = 7'd100;
 
 localparam MTVEC_CSR_ADDR = 12'h305;
 localparam MSCRATCH_CSR_ADDR = 12'h340;
@@ -439,7 +439,7 @@ sram_controller #(
 );
 
 uart_controller #(
-    .CLK_FREQ(50_000_000),
+    .CLK_FREQ(100_000_000),
     .BAUD    (115200)
 ) uart_controller (
     .clk_i(sys_clk),
@@ -1193,7 +1193,7 @@ always_ff @(posedge sys_clk) begin : mstatus
     end
 end
 
-logic [5:0] timer_counter;
+logic [6:0] timer_counter;
 // 10M ~ 100ns, sets `mtime` to increment 1us each time, so `timer_counter` counts 10 cycles of 10M
 // 50M ~ 20ns, sets `mtime` to increment 1us each time, so `timer_counter` counts 50 cycles of 50M
 always_ff @(posedge sys_clk) begin : standard_timer
