@@ -80,31 +80,29 @@ module thinpad_top (
     output wire       video_de      // 行数据有效信号，用于区分消隐区
 );
 
-wire locked, clk_10M, clk_20M;
-pll_example clock_gen (
-    // Clock in ports
-    .clk_in1(clk_50M),  // 外部时钟输入
-    // Clock out ports
-    .clk_out1(clk_10M),  // 时钟输出 1，频率在 IP 配置界面中设置
-    .clk_out2(clk_20M),  // 时钟输出 2，频率在 IP 配置界面中设置
-    // Status and control signals
-    .reset(reset_btn),  // PLL 复位输入
-    .locked(locked)  // PLL 锁定指示输出，"1"表示时钟稳定，
-                    // 后级电路复位信号应当由它生成（见下）
+wire clk_out1;
+wire locked;
+pll_example pll_inst (
+    .clk_out1(clk_out1),     // 50M
+    .clk_out2(),             // 10M
+
+    .reset(reset_btn),
+    .locked(locked),
+    
+    .clk_in1(clk_50M)
 );
 
-logic reset_of_clk10M;
-// 异步复位，同步释放，将 locked 信号转为后级电路的复位 reset_of_clk10M
-always_ff @(posedge clk_10M or negedge locked) begin
-    if (~locked) reset_of_clk10M <= 1'b1;
-    else reset_of_clk10M <= 1'b0;
+logic reset_of_clk50M;
+always_ff @(posedge clk_out1 or negedge locked) begin
+    if (~locked) reset_of_clk50M <= 1'b1;
+    else reset_of_clk50M <= 1'b0;
 end
 
 wire sys_clk;
 wire sys_rst;
 
-assign sys_clk = clk_10M;
-assign sys_rst = reset_of_clk10M;
+assign sys_clk = clk_out1;
+assign sys_rst = reset_of_clk50M;
 
 // 本实验不使用 CPLD 串口，禁用防止总线冲突
 assign uart_rdn = 1'd1;
@@ -124,7 +122,7 @@ parameter [ADDR_WIDTH-1:0] MTIME_L_ADDR    = 'h0200BFF8;
 parameter [ADDR_WIDTH-1:0] MTIME_H_ADDR    = 'h0200BFFC;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_L_ADDR = 'h02004000;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_H_ADDR = 'h02004004;
-parameter TIMER_CNT_MAX = 4'd10;
+parameter TIMER_CNT_MAX = 6'd50;
 
 localparam MTVEC_CSR_ADDR = 12'h305;
 localparam MSCRATCH_CSR_ADDR = 12'h340;
@@ -441,7 +439,7 @@ sram_controller #(
 );
 
 uart_controller #(
-    .CLK_FREQ(10_000_000),
+    .CLK_FREQ(50_000_000),
     .BAUD    (115200)
 ) uart_controller (
     .clk_i(sys_clk),
@@ -1195,8 +1193,9 @@ always_ff @(posedge sys_clk) begin : mstatus
     end
 end
 
-logic [3:0] timer_counter;
+logic [5:0] timer_counter;
 // 10M ~ 100ns, sets `mtime` to increment 1us each time, so `timer_counter` counts 10 cycles of 10M
+// 50M ~ 20ns, sets `mtime` to increment 1us each time, so `timer_counter` counts 50 cycles of 50M
 always_ff @(posedge sys_clk) begin : standard_timer
     if (sys_rst) begin
         timer_counter <= 'd0;
