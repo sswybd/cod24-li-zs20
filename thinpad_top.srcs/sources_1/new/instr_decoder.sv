@@ -76,7 +76,7 @@ assign is_ctz = (opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) && (funct3 
 
 assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :                                               // output operand_b
                           ((opcode_segment == S_TYPE_OPCODE) || (opcode_segment == LOAD_TYPE_OPCODE)
-                        || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || (opcode_segment == R_TYPE_OPCODE)) && (funct3 == 3'b000))
+                        || (((opcode_segment == BASIC_I_TYPE_WITHOUT_LOAD_OPCODE) || ((opcode_segment == R_TYPE_OPCODE) && (funct7 == 7'b0000000))) && (funct3 == 3'b000))
                         || (opcode_segment == AUIPC_OPCODE) || (opcode_segment == JALR_OPCODE)) ? 'd1 :       // add
                           (
                            ((opcode_segment == B_TYPE_OPCODE) && (funct3 == 3'b000)) ||
@@ -95,6 +95,7 @@ assign decoded_alu_op_o = (opcode_segment == LUI_OPCODE) ? 'd12 :               
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b100) && (funct7 == 7'b0100000)) ? 'd14 :  // xnor
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b001) && (funct7 == 7'b0100100)) ? 'd15 :  // sbclr
                           ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b011) && (funct7 == 7'b0000000)) ? 'd16 :  // sltu
+                          ((opcode_segment == R_TYPE_OPCODE) && (funct3 == 3'b000) && (funct7 == 7'b0101000)) ? 'd17 :  // sha512sum0r
                           'd0;
 
 always_comb begin : calc_imm

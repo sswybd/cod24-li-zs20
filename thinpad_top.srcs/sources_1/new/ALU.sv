@@ -48,8 +48,8 @@ assign alu_result =
                 (operand_a & 
                     (~('d1 << (operand_b & {{(DATA_WIDTH-SHIFT_RANGE){1'b0}}, {SHIFT_RANGE{1'b1}}}))))
                ) |  // sbclr
-               ({DATA_WIDTH{alu_op == 'd16}} & {{(DATA_WIDTH-1){1'b0}}, (operand_a < operand_b)})  // sltu
-                
+               ({DATA_WIDTH{alu_op == 'd16}} & {{(DATA_WIDTH-1){1'b0}}, (operand_a < operand_b)}) |  // sltu
+               ({DATA_WIDTH{alu_op == 'd17}} & ((operand_a << 25) ^ (operand_a << 30) ^ (operand_a >> 28) ^ (operand_b >> 7) ^ (operand_b >> 2) ^ (operand_b << 4)))  // sha512sum0r
                 ;
 
 endmodule
