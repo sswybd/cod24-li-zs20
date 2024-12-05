@@ -84,7 +84,7 @@ wire clk_out2;
 wire locked;
 pll_example pll_inst (
     .clk_out1(),         // 50M
-    .clk_out2(clk_out2), // 100M
+    .clk_out2(clk_out2), // 50M
 
     .reset(reset_btn),
     .locked(locked),
@@ -122,7 +122,7 @@ parameter [ADDR_WIDTH-1:0] MTIME_L_ADDR    = 'h0200BFF8;
 parameter [ADDR_WIDTH-1:0] MTIME_H_ADDR    = 'h0200BFFC;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_L_ADDR = 'h02004000;
 parameter [ADDR_WIDTH-1:0] MTIMECMP_H_ADDR = 'h02004004;
-parameter TIMER_CNT_MAX = 7'd100;
+parameter TIMER_CNT_MAX = 7'd50;
 
 localparam MTVEC_CSR_ADDR = 12'h305;
 localparam MSCRATCH_CSR_ADDR = 12'h340;
@@ -439,7 +439,7 @@ sram_controller #(
 );
 
 uart_controller #(
-    .CLK_FREQ(100_000_000),
+    .CLK_FREQ(50_000_000),
     .BAUD    (115200)
 ) uart_controller (
     .clk_i(sys_clk),
